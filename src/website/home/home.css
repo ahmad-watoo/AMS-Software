@@ -1,0 +1,36 @@
+/* Container for the entire section */
+.hero-section {
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+  background-attachment: fixed;
+  transition: background-image 3s ease-in-out;
+}
+.hero-content p,
+h1 {
+  color: rgb(247, 248, 248);
+}
+
+.hero-content-wrapper {
+  padding: 50px;
+}
+
+/* Optional: Add an overlay to the background for better readability */
+.hero-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+/* Ensure image and text are above the background overlay */
+.hero-content,
+.hero-image {
+  z-index: 2;
+}

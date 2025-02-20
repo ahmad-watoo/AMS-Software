@@ -1,0 +1,93 @@
+.websiteBlog-header {
+  width: 100%;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+}
+
+.header-container {
+  padding: 10px;
+}
+
+/* Flexbox-based layout for social icons and nav links */
+.header-nav-link {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.header-nav-list {
+  margin: 0 10px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #777;
+  font-size: 18px;
+  font-weight: 500;
+  padding: 10px 15px;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #5ed439;
+}
+
+.nav-link.active {
+  color: #ff6347;
+  font-weight: bold;
+  border-bottom: 2px solid #ff6347;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.social-icons a {
+  margin: 0 8px;
+}
+
+.mobile-nav {
+  display: none;
+}
+
+/* Responsive Layouts */
+@media (max-width: 991px) {
+  .desktop-nav {
+    display: none;
+  }
+
+  .desktop-social-icons {
+    display: none;
+  }
+
+  .mobile-nav {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .mobile-social-icons {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 20px;
+  }
+}
+
+.mobile-drawer .ant-drawer-body {
+  padding: 0;
+}
