@@ -10,15 +10,16 @@ import SideMenu from "./Admin/components/SideMenu/SideMenu";
 import { Spin } from "antd";
 import NotFoundPage from "./Admin/pages/404/index";
 import DashboardHeader from "./Admin/pages/Dashboardheader/DashboardTopBar";
+import "./App.css";
 function App() {
   // let { id } = useParams();
 
   return (
     <>
       <Router>
-        <div style={{ display: "flex" }}>
+        <div className="App" style={{ display: "flex" }}>
           <SideMenu />
-          <div style={{ marginLeft: 10, padding: 20, width: "100%" }}>
+          <div style={{ width: "100%" }}>
             <DashboardHeader />
             <Suspense fallback={<Spin size="large" />}>
               <Routes>

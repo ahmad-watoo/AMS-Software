@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Layout,
   Avatar,
@@ -23,6 +23,15 @@ const { Title } = Typography;
 
 const DashboardHeader: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  // timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, []);
 
   const handleLogout = () => {
     console.log("Logout Clicked!");
@@ -42,19 +51,24 @@ const DashboardHeader: React.FC = () => {
   return (
     <Header
       style={{
-        background: "#fff",
+        background: "#86cb87",
         padding: "0",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        paddingLeft: 10,
+        paddingRight: 10,
       }}
     >
       {/* Left Side: Logo & Title */}
       <Space>
-        <Avatar src="https://via.placeholder.com/40" size="large" />
+        <Avatar
+          src="https://img.freepik.com/premium-photo/blue-purple-wave-that-is-white-background_1309810-40680.jpg?semt=ais_hybrid"
+          size="large"
+        />
         <Title level={4} style={{ margin: 0 }}>
-          Academy Management system 00
+          Noble Grammer School
         </Title>
       </Space>
 
@@ -64,7 +78,9 @@ const DashboardHeader: React.FC = () => {
         prefix={<SearchOutlined />}
         style={{ width: "300px", borderRadius: "5px" }}
       />
-
+      <p className="font-sm!">
+        {currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}
+      </p>
       {/* Right Side: Icons & Profile */}
       <Space size="large">
         {/* Notifications Bell */}
