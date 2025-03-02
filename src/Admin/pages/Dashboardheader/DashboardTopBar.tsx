@@ -54,7 +54,7 @@ const DashboardHeader: React.FC = () => {
       <Space>
         <Avatar src="https://via.placeholder.com/40" size="large" />
         <Title level={4} style={{ margin: 0 }}>
-          Academy Management
+          Academy Management system 00
         </Title>
       </Space>
 
