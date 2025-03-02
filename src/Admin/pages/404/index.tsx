@@ -22,7 +22,7 @@ const NotFoundPage = () => {
         </p>
         <Link to="/">
           <Button type="primary" className="mt-6 px-6 py-3 text-lg">
-            Go Back to Home
+            Go Back
           </Button>
         </Link>
       </Card>
