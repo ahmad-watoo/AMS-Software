@@ -1,0 +1,40 @@
+/* LoginPage.css */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-image: url("../../../images/loginBackground.jpg"); /* Add your background image URL */
+  background-size: cover;
+  background-position: center;
+  width: 100%;
+  font-family: monospace;
+}
+
+.login-form-container {
+  background: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.login-form .login-button {
+  width: 100%;
+  background-color: #1890ff; /* Ant Design primary color */
+  border: none;
+  padding: 4px;
+}
+
+.login-form .login-button:hover {
+  background-color: #40a9ff; /* Lighter shade for hover effect */
+}

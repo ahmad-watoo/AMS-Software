@@ -5,8 +5,10 @@ export const route = {
   // MENU_DASHBOARD: "/menu_dashboard",
   // Module wise route constant list
   // 1: Admission
+  // ADMISSION_APLLICATION_FORMS: "/admission/applicationforms",
+  ADMISSION_APLLICATION_FORMS: "/",
+
   ADMISSION_ADMISSION_STATUS: "/admission/admissionstatus",
-  ADMISSION_APLLICATION_FORMS: "/admission/applicationforms",
   ADMISSION_ELIGIBILITY_CHECK: "/admission/eligibilitycheck",
   ADMISSION_FEE_SUBMISSION: "/admission/feesubmission",
   //Library
