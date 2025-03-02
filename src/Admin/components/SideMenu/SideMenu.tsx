@@ -72,11 +72,12 @@ const SideMenu = () => {
       {/* Admin section (optional) */}
       {!collapsed && (
         <div className="admin-section">
-          <img
+          {/* <img
             src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
             alt="adminpic"
             className="admin-pic"
-          />
+          /> */}
+          
           <span>Ahmad</span>
         </div>
       )}
