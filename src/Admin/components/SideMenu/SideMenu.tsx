@@ -65,16 +65,17 @@ const SideMenu = () => {
           <span className="text-white font-semibold">Ahmad</span>
         </div>
       )}
-
-      <Menu
-        mode="inline"
-        theme="dark"
-        inlineCollapsed={collapsed}
-        selectedKeys={[pathname]}
-        openKeys={openKeys} // Control open keys
-        onOpenChange={handleOpenChange} // Ensure only one is open
-        items={renderMenuItems()} // Use items instead of children
-      />
+      <div className="menu-container">
+        <Menu
+          mode="inline"
+          theme="dark"
+          inlineCollapsed={collapsed}
+          selectedKeys={[pathname]}
+          openKeys={openKeys} // Control open keys
+          onOpenChange={handleOpenChange} // Ensure only one is open
+          items={renderMenuItems()} // Use items instead of children
+        />
+      </div>
     </div>
   );
 };

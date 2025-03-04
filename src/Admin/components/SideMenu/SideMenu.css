@@ -2,7 +2,7 @@
   width: 250px;
   background-color: #001529;
   position: relative;
-  transition: width 0.3s ease;
+  transition: width 0.7s ease;
   height: 100vh;
   top: 0;
   left: 0;
@@ -12,7 +12,21 @@
 .side-menu.collapsed {
   width: 80px;
 }
+/* Scrollable Menu */
+.menu-container {
+  flex-grow: 1; /* Fills remaining space */
+  overflow-y: auto; /* Enables scrolling */
+  max-height: calc(100vh - 100px); /* Adjust based on admin section height */
+}
+/* Custom Scrollbar */
+.menu-container::-webkit-scrollbar {
+  width: 5px;
+}
 
+.menu-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
 .admin-section {
   text-align: center;
   margin: 10px 0;

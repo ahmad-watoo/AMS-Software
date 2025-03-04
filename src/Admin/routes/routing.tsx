@@ -36,3 +36,4 @@
 //     children: subsections, // Subsections as children routes
 //   };
 // });
+export default {};

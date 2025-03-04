@@ -57,38 +57,40 @@ function App() {
     </div>
   );
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
-      }}
-    >
-      <Router>
-        <div className="App">
-          <Routes>
-            {/* Public Routes */}
+    <>
+      <ConfigProvider
+        theme={{
+          algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        }}
+      >
+        <Router>
+          <div className="App">
+            <Routes>
+              {/* Public Routes */}
 
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUp />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUp />} />
 
-            {/* Protected Routes */}
-            <Route element={<UserAuthentication />}>
-              <Route element={<ProtectedLayout />}>
-                {protectedRoutes.map((route, index) => (
-                  <Route
-                    key={`${index}-${route.path}`}
-                    path={route.path}
-                    element={route.element}
-                  />
-                ))}
+              {/* Protected Routes */}
+              <Route element={<UserAuthentication />}>
+                <Route element={<ProtectedLayout />}>
+                  {protectedRoutes.map((route, index) => (
+                    <Route
+                      key={`${index}-${route.path}`}
+                      path={route.path}
+                      element={route.element}
+                    />
+                  ))}
+                </Route>
               </Route>
-            </Route>
 
-            {/* 404 Not Found Page */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </div>
-      </Router>
-    </ConfigProvider>
+              {/* 404 Not Found Page */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </div>
+        </Router>
+      </ConfigProvider>
+    </>
   );
 }
 

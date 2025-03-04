@@ -26,4 +26,4 @@
 //   return <Navigate to="/" />;
 // }
 
-// export default PrivateRoute;
+export default {};
