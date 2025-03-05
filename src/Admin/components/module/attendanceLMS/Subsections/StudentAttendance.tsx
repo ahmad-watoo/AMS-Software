@@ -1,120 +1,141 @@
 import React, { useState } from "react";
-import { Table, Select, DatePicker, Input, Tag, Button } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
-// import dayjs from "dayjs";
+import { Table, Input, DatePicker, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import "tailwindcss/tailwind.css"; // Ensure Tailwind CSS is imported
 
-const { Option } = Select;
+const { RangePicker } = DatePicker;
 
-// Mock Data (Replace with API Data)
-const attendanceData = [
-  {
-    id: 1,
-    name: "Ali Khan",
-    class: "10A",
-    date: "2024-03-05",
-    status: "Present",
-  },
-  {
-    id: 2,
-    name: "Sara Ahmed",
-    class: "9B",
-    date: "2024-03-05",
-    status: "Absent",
-  },
-  {
-    id: 3,
-    name: "Hassan Raza",
-    class: "10A",
-    date: "2024-03-05",
-    status: "Late",
-  },
-];
+interface StudentAttendance {
+  key: string;
+  studentName: string;
+  date: string;
+  status: string;
+}
 
-const StudentAttendance: React.FC = () => {
-  const [filteredData, setFilteredData] = useState(attendanceData);
+const StudentAttendancePage: React.FC = () => {
+  const [attendanceData, setAttendanceData] = useState<StudentAttendance[]>([
+    {
+      key: "1",
+      studentName: "John Doe",
+      date: "2023-10-15",
+      status: "Present",
+    },
+    {
+      key: "2",
+      studentName: "Jane Smith",
+      date: "2023-10-15",
+      status: "Absent",
+    },
+    {
+      key: "3",
+      studentName: "Alice Johnson",
+      date: "2023-10-16",
+      status: "Present",
+    },
+    {
+      key: "4",
+      studentName: "Bob Brown",
+      date: "2023-10-16",
+      status: "Present",
+    },
+  ]);
+
   const [searchText, setSearchText] = useState("");
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<string[]>([]);
 
-  // Filter Function
-  const handleFilter = () => {
-    let data = attendanceData;
-    if (searchText) {
-      data = data.filter((item) =>
-        item.name.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-    if (selectedClass) {
-      data = data.filter((item) => item.class === selectedClass);
-    }
-    if (selectedDate) {
-      data = data.filter((item) => item.date === selectedDate);
-    }
-    setFilteredData(data);
-  };
-
-  // Table Columns
-  const columns = [
-    { title: "Student Name", dataIndex: "name", key: "name" },
-    { title: "Class", dataIndex: "class", key: "class" },
-    { title: "Date", dataIndex: "date", key: "date" },
+  // Columns for the student attendance table
+  const columns: ColumnsType<StudentAttendance> = [
+    {
+      title: "Student Name",
+      dataIndex: "studentName",
+      key: "studentName",
+    },
+    {
+      title: "Date",
+      dataIndex: "date",
+      key: "date",
+    },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status: string) => {
-        const color =
-          status === "Present"
-            ? "green"
-            : status === "Absent"
-            ? "red"
-            : "orange";
-        return <Tag color={color}>{status}</Tag>;
-      },
+      render: (status: string, record: StudentAttendance) => (
+        <Tag
+          color={status === "Present" ? "green" : "red"}
+          onClick={() => handleToggleStatus(record.key)}
+          className="cursor-pointer"
+        >
+          {status}
+        </Tag>
+      ),
     },
   ];
 
-  return (
-    <div className="p-6 bg-white shadow-lg rounded-xl">
-      <h2 className="text-xl font-semibold mb-4">Student Attendance</h2>
+  // Handle search
+  const handleSearch = (value: string) => {
+    setSearchText(value);
+  };
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-4">
+  // Handle date range filter
+  const handleDateRangeChange = (dates: any, dateStrings: string[]) => {
+    setDateRange(dateStrings);
+  };
+
+  // Handle toggle attendance status
+  const handleToggleStatus = (key: string) => {
+    setAttendanceData(
+      attendanceData.map((record) =>
+        record.key === key
+          ? {
+              ...record,
+              status: record.status === "Present" ? "Absent" : "Present",
+            }
+          : record
+      )
+    );
+  };
+
+  // Apply filters
+  const filteredData = attendanceData.filter((record) => {
+    const matchesSearch = record.studentName
+      .toLowerCase()
+      .includes(searchText.toLowerCase());
+    const matchesDateRange =
+      dateRange.length === 0 ||
+      (record.date >= dateRange[0] && record.date <= dateRange[1]);
+
+    return matchesSearch && matchesDateRange;
+  });
+
+  return (
+    <div className="max-w-7xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6 text-center">
+        Student Attendance
+      </h1>
+
+      {/* Search and Filters */}
+      <div className="flex flex-wrap gap-4 mb-6">
         <Input
-          placeholder="Search Student"
-          prefix={<SearchOutlined />}
+          placeholder="Search by student name"
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="w-60"
+          onChange={(e) => handleSearch(e.target.value)}
+          className="w-full md:w-64"
         />
-        <Select
-          placeholder="Select Class"
-          allowClear
-          className="w-40"
-          onChange={(value) => setSelectedClass(value)}
-        >
-          <Option value="10A">10A</Option>
-          <Option value="9B">9B</Option>
-        </Select>
-        <DatePicker
-          className="w-40"
-          onChange={(date, dateString: any) => setSelectedDate(dateString)}
+        <RangePicker
+          onChange={handleDateRangeChange}
+          className="w-full md:w-48"
         />
-        <Button type="primary" onClick={handleFilter}>
-          Filter
-        </Button>
       </div>
 
-      {/* Attendance Table */}
+      {/* Student Attendance Table */}
       <Table
-        dataSource={filteredData}
         columns={columns}
-        rowKey="id"
+        dataSource={filteredData}
         pagination={{ pageSize: 5 }}
-        className="shadow-sm border rounded-lg"
+        className="shadow-md"
       />
     </div>
   );
 };
 
-export default StudentAttendance;
+export default StudentAttendancePage;

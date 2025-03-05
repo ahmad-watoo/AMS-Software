@@ -45,7 +45,7 @@ const AttendanceReportPage: React.FC = () => {
       status: "Present",
     },
   ]);
-
+  setAttendanceData(attendanceData);
   const [searchText, setSearchText] = useState("");
   const [dateRange, setDateRange] = useState<string[]>([]);
   const [classFilter, setClassFilter] = useState<string | null>(null);
