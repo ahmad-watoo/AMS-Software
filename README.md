@@ -4,6 +4,12 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ## Available Scripts
 
+open vs code
+open terminal powershell/cmd
+run command
+1 => npm install
+npm start => (for start application on localhost//3000)
+
 In the project directory, you can run:
 
 ### `npm start`
