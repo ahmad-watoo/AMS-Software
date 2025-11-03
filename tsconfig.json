@@ -17,7 +17,14 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"],
+      "@/api/*": ["api/*"],
+      "@/components/*": ["components/*"],
+      "@/contexts/*": ["contexts/*"]
+    }
   },
   "include": [
     "src"

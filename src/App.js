@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Outlet,
+  Navigate,
 } from "react-router-dom";
 import { protectedRoutes } from "./Admin/routes/routeList";
 import SideMenu from "./Admin/components/SideMenu/SideMenu";
@@ -13,6 +14,7 @@ import DashboardHeader from "./Admin/pages/Dashboardheader/DashboardTopBar";
 import UserAuthentication from "./Admin/pages/userAuth/userAuthentication";
 import LoginPage from "./Admin/pages/userAuth/Login"; // Create this component for the login page
 import SignUp from "./Admin/pages/userAuth/SignUp"; // Create this component for the signup page
+import { AuthProvider } from "./contexts/AuthContext";
 
 import "./App.css";
 
@@ -63,11 +65,12 @@ function App() {
           algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
         }}
       >
-        <Router>
-          <div className="App">
-            <Routes>
+        <AuthProvider>
+          <Router>
+            <div className="App">
+              <Routes>
               {/* Public Routes */}
-
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUp />} />
 
@@ -89,6 +92,7 @@ function App() {
             </Routes>
           </div>
         </Router>
+        </AuthProvider>
       </ConfigProvider>
     </>
   );

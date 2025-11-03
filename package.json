@@ -10,6 +10,8 @@
     "@testing-library/user-event": "^13.5.0",
     "antd": "^5.20.6",
     "autoprefixer": "^10.4.20",
+    "axios": "^1.6.0",
+    "dayjs": "^1.11.10",
     "jotai": "^2.10.0",
     "lodash": "^4.17.21",
     "postcss": "^8.5.3",

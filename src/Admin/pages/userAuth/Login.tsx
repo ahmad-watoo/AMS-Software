@@ -1,36 +1,35 @@
 import React, { useState } from "react";
 import { Avatar, Button, Form, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../../contexts/AuthContext";
 import "./LoginPage.css"; // Import custom CSS for styling
+
+interface LoginFormValues {
+  email: string;
+  password: string;
+}
 
 const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login, error, clearError } = useAuthContext();
 
-  // Specific username and password for validation
-  const validCredentials = {
-    username: "admin", // Replace with your specific username
-    password: "456", // Replace with your specific password
-  };
-
-  const onFinish = (values: any) => {
-    setLoading(true);
-    // Simulate login API call
-    setTimeout(() => {
-      if (
-        values.email === validCredentials.username &&
-        values.password === validCredentials.password
-      ) {
-        // If credentials are correct, store user data and redirect to dashboard
-        localStorage.setItem("user", JSON.stringify({ email: values.email }));
-        message.success("Login successful!");
-        navigate("/");
-      } else {
-        // If credentials are incorrect, show error message
-        message.error("Invalid email or password!");
-      }
+  const onFinish = async (values: LoginFormValues) => {
+    try {
+      setLoading(true);
+      clearError();
+      await login({
+        email: values.email,
+        password: values.password,
+      });
+      message.success("Login successful!");
+      navigate("/");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Login failed. Please try again.";
+      message.error(errorMessage);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

@@ -1,15 +1,33 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
+import { useAuthContext } from "../../../contexts/AuthContext";
+import { Spin } from "antd";
 
 const UserAuthentication: React.FC = () => {
-  const user = localStorage.getItem("user");
+  const { isAuthenticated, isLoading } = useAuthContext();
 
-  // If user data exists in localStorage, allow access to protected routes
-  if (user) {
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  // If user is authenticated, allow access to protected routes
+  if (isAuthenticated) {
     return <Outlet />;
   }
 
-  // If no user data, redirect to login page
+  // If not authenticated, redirect to login page
   return <Navigate to="/login" replace />;
 };
 
