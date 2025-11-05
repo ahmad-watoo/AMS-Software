@@ -63,6 +63,26 @@ const STORAGE_KEYS = {
 };
 
 /**
+ * TEMPORARY: Bypass authentication for development
+ * Set to false when you have actual credentials
+ * TODO: Remove this when authentication is configured
+ */
+const BYPASS_AUTH = true; // Set to false to enable real authentication
+
+/**
+ * Mock user for development bypass
+ */
+const MOCK_USER: User = {
+  id: 'mock-admin-id',
+  email: 'admin@ams.local',
+  firstName: 'Admin',
+  lastName: 'User',
+  isActive: true,
+  isVerified: true,
+  phone: '+92-300-1234567',
+};
+
+/**
  * useAuth Hook
  * 
  * Provides authentication functionality for the application.
@@ -132,21 +152,48 @@ export const useAuth = (): UseAuthReturn => {
           }
         } else {
           // No stored session
+          // TEMPORARY: Bypass authentication for development
+          if (BYPASS_AUTH) {
+            // Set mock user for development
+            setAuthState({
+              user: MOCK_USER,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+            // Store mock tokens for consistency
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'mock-access-token');
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(MOCK_USER));
+          } else {
+            // Normal behavior: no authentication
+            setAuthState({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: null,
+            });
+          }
+        }
+      } catch (error) {
+        // Handle errors during session restoration
+        // TEMPORARY: If bypass is enabled, use mock user even on error
+        if (BYPASS_AUTH) {
+          setAuthState({
+            user: MOCK_USER,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'mock-access-token');
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(MOCK_USER));
+        } else {
           setAuthState({
             user: null,
             isAuthenticated: false,
             isLoading: false,
-            error: null,
+            error: 'Failed to load user session',
           });
         }
-      } catch (error) {
-        // Handle errors during session restoration
-        setAuthState({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-          error: 'Failed to load user session',
-        });
       }
     };
 
@@ -258,8 +305,19 @@ export const useAuth = (): UseAuthReturn => {
    * 
    * Fetches fresh user data from server and updates state.
    * If refresh fails, logs out user (token might be expired).
+   * TEMPORARY: If BYPASS_AUTH is enabled, just returns mock user.
    */
   const refreshUser = useCallback(async () => {
+    // TEMPORARY: Skip API call if bypass is enabled
+    if (BYPASS_AUTH) {
+      setAuthState((prev) => ({
+        ...prev,
+        user: MOCK_USER,
+      }));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(MOCK_USER));
+      return;
+    }
+
     try {
       const user = await authAPI.getProfile();
       setAuthState((prev) => ({

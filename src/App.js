@@ -77,13 +77,13 @@ function App() {
               {/* Protected Routes */}
               <Route element={<UserAuthentication />}>
                 <Route element={<ProtectedLayout />}>
-                  {/* {protectedRoutes.map((route, index) => ( */}
+                  {protectedRoutes.map((route, index) => (
                     <Route
                       key={`${index}-${route.path}`}
                       path={route.path}
                       element={route.element}
                     />
-                  {/* ))} */}
+                  ))}
                 </Route>
               </Route>
 
