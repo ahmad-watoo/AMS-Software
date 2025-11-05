@@ -1,3 +1,13 @@
+/**
+ * Payroll Controller
+ * 
+ * Handles HTTP requests for payroll management endpoints.
+ * Manages salary structures, salary processing, approvals, and tax calculations.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/payroll.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { PayrollService } from '@/services/payroll.service';
 import {
@@ -19,6 +29,22 @@ export class PayrollController {
 
   // ==================== Salary Structures ====================
 
+  /**
+   * Get All Salary Structures Endpoint Handler
+   * 
+   * Retrieves all salary structures with pagination and optional filters.
+   * 
+   * @route GET /api/v1/payroll/salary-structures
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [employeeId] - Filter by employee ID
+   * @query {boolean} [isActive] - Filter by active status
+   * @returns {Object} Salary structures array and pagination info
+   * 
+   * @example
+   * GET /api/v1/payroll/salary-structures?page=1&limit=20&employeeId=employee123&isActive=true
+   */
   getAllSalaryStructures = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -49,6 +75,16 @@ export class PayrollController {
     }
   };
 
+  /**
+   * Get Salary Structure By ID Endpoint Handler
+   * 
+   * Retrieves a specific salary structure by ID.
+   * 
+   * @route GET /api/v1/payroll/salary-structures/:id
+   * @access Private
+   * @param {string} id - Salary structure ID
+   * @returns {SalaryStructure} Salary structure object
+   */
   getSalaryStructureById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -60,6 +96,16 @@ export class PayrollController {
     }
   };
 
+  /**
+   * Get Active Salary Structure Endpoint Handler
+   * 
+   * Retrieves the active salary structure for an employee.
+   * 
+   * @route GET /api/v1/payroll/employees/:employeeId/salary-structure
+   * @access Private
+   * @param {string} employeeId - Employee ID
+   * @returns {SalaryStructure} Active salary structure
+   */
   getActiveSalaryStructure = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { employeeId } = req.params;
@@ -71,6 +117,26 @@ export class PayrollController {
     }
   };
 
+  /**
+   * Create Salary Structure Endpoint Handler
+   * 
+   * Creates a new salary structure.
+   * 
+   * @route POST /api/v1/payroll/salary-structures
+   * @access Private (Requires payroll.create permission)
+   * @body {CreateSalaryStructureDTO} Salary structure creation data
+   * @returns {SalaryStructure} Created salary structure
+   * 
+   * @example
+   * POST /api/v1/payroll/salary-structures
+   * Body: {
+   *   employeeId: "employee123",
+   *   basicSalary: 100000,
+   *   houseRentAllowance: 50000,
+   *   medicalAllowance: 10000,
+   *   effectiveDate: "2024-01-01"
+   * }
+   */
   createSalaryStructure = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const structureData: CreateSalaryStructureDTO = {
@@ -98,6 +164,24 @@ export class PayrollController {
     }
   };
 
+  /**
+   * Update Salary Structure Endpoint Handler
+   * 
+   * Updates an existing salary structure.
+   * 
+   * @route PUT /api/v1/payroll/salary-structures/:id
+   * @access Private (Requires payroll.update permission)
+   * @param {string} id - Salary structure ID
+   * @body {UpdateSalaryStructureDTO} Partial structure data to update
+   * @returns {SalaryStructure} Updated salary structure
+   * 
+   * @example
+   * PUT /api/v1/payroll/salary-structures/structure123
+   * Body: {
+   *   basicSalary: 120000,
+   *   houseRentAllowance: 60000
+   * }
+   */
   updateSalaryStructure = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -124,6 +208,23 @@ export class PayrollController {
 
   // ==================== Salary Processing ====================
 
+  /**
+   * Get All Salary Processings Endpoint Handler
+   * 
+   * Retrieves all salary processings with pagination and optional filters.
+   * 
+   * @route GET /api/v1/payroll/processings
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [employeeId] - Filter by employee ID
+   * @query {string} [payrollPeriod] - Filter by payroll period (YYYY-MM)
+   * @query {string} [status] - Filter by status
+   * @returns {Object} Salary processings array and pagination info
+   * 
+   * @example
+   * GET /api/v1/payroll/processings?page=1&limit=20&payrollPeriod=2024-10&status=processed
+   */
   getAllSalaryProcessings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -155,6 +256,16 @@ export class PayrollController {
     }
   };
 
+  /**
+   * Get Salary Processing By ID Endpoint Handler
+   * 
+   * Retrieves a specific salary processing by ID.
+   * 
+   * @route GET /api/v1/payroll/processings/:id
+   * @access Private
+   * @param {string} id - Salary processing ID
+   * @returns {SalaryProcessing} Salary processing object
+   */
   getSalaryProcessingById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -166,6 +277,25 @@ export class PayrollController {
     }
   };
 
+  /**
+   * Process Salary Endpoint Handler
+   * 
+   * Processes monthly salary for an employee with comprehensive calculations.
+   * 
+   * @route POST /api/v1/payroll/processings
+   * @access Private (Requires payroll.create permission)
+   * @body {ProcessSalaryDTO} Salary processing data
+   * @returns {SalaryProcessing} Created salary processing record
+   * 
+   * @example
+   * POST /api/v1/payroll/processings
+   * Body: {
+   *   employeeId: "employee123",
+   *   payrollPeriod: "2024-10",
+   *   daysWorked: 25,
+   *   bonus: 10000
+   * }
+   */
   processSalary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const processingData: ProcessSalaryDTO = {
@@ -191,6 +321,24 @@ export class PayrollController {
     }
   };
 
+  /**
+   * Approve Salary Endpoint Handler
+   * 
+   * Approves a processed salary and generates a salary slip.
+   * 
+   * @route POST /api/v1/payroll/processings/:id/approve
+   * @access Private (Requires payroll.approve permission)
+   * @param {string} id - Salary processing ID
+   * @body {ApproveSalaryDTO} Approval data
+   * @returns {SalaryProcessing} Updated salary processing
+   * 
+   * @example
+   * POST /api/v1/payroll/processings/processing123/approve
+   * Body: {
+   *   status: "approved",
+   *   remarks: "Approved for payment"
+   * }
+   */
   approveSalary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -212,6 +360,24 @@ export class PayrollController {
     }
   };
 
+  /**
+   * Mark Salary As Paid Endpoint Handler
+   * 
+   * Marks an approved salary as paid with payment date.
+   * 
+   * @route POST /api/v1/payroll/processings/:id/mark-paid
+   * @access Private (Requires payroll.update permission)
+   * @param {string} id - Salary processing ID
+   * @body {Object} Payment data
+   * @body {string} body.paymentDate - Payment date (YYYY-MM-DD)
+   * @returns {SalaryProcessing} Updated salary processing
+   * 
+   * @example
+   * POST /api/v1/payroll/processings/processing123/mark-paid
+   * Body: {
+   *   paymentDate: "2024-10-31"
+   * }
+   */
   markAsPaid = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -231,6 +397,20 @@ export class PayrollController {
 
   // ==================== Salary Slips ====================
 
+  /**
+   * Get Salary Slips By Employee Endpoint Handler
+   * 
+   * Retrieves salary slips for a specific employee.
+   * 
+   * @route GET /api/v1/payroll/employees/:employeeId/salary-slips
+   * @access Private
+   * @param {string} employeeId - Employee ID
+   * @query {number} [limit=12] - Maximum number of slips to return
+   * @returns {SalarySlip[]} Array of salary slips
+   * 
+   * @example
+   * GET /api/v1/payroll/employees/employee123/salary-slips?limit=6
+   */
   getSalarySlipsByEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { employeeId } = req.params;
@@ -245,6 +425,20 @@ export class PayrollController {
 
   // ==================== Tax Calculation ====================
 
+  /**
+   * Calculate Tax For Employee Endpoint Handler
+   * 
+   * Calculates annual tax liability for an employee for a tax year.
+   * 
+   * @route GET /api/v1/payroll/employees/:employeeId/tax
+   * @access Private
+   * @param {string} employeeId - Employee ID
+   * @query {string} taxYear - Tax year (YYYY)
+   * @returns {TaxCalculation} Tax calculation with liability and refund
+   * 
+   * @example
+   * GET /api/v1/payroll/employees/employee123/tax?taxYear=2024
+   */
   calculateTaxForEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { employeeId } = req.params;
@@ -267,6 +461,19 @@ export class PayrollController {
 
   // ==================== Payroll Summary ====================
 
+  /**
+   * Get Payroll Summary Endpoint Handler
+   * 
+   * Generates a comprehensive payroll summary for a payroll period.
+   * 
+   * @route GET /api/v1/payroll/summary
+   * @access Private
+   * @query {string} payrollPeriod - Payroll period (YYYY-MM)
+   * @returns {PayrollSummary} Payroll summary with totals and statistics
+   * 
+   * @example
+   * GET /api/v1/payroll/summary?payrollPeriod=2024-10
+   */
   getPayrollSummary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { payrollPeriod } = req.query;
@@ -283,4 +490,3 @@ export class PayrollController {
     }
   };
 }
-

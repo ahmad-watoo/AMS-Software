@@ -1,3 +1,13 @@
+/**
+ * Attendance Controller
+ * 
+ * Handles HTTP requests for attendance management endpoints.
+ * Manages attendance records, bulk operations, summaries, and reports.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/attendance.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { AttendanceService } from '@/services/attendance.service';
 import {
@@ -15,6 +25,25 @@ export class AttendanceController {
     this.attendanceService = new AttendanceService();
   }
 
+  /**
+   * Get All Attendance Records Endpoint Handler
+   * 
+   * Retrieves all attendance records with pagination and optional filters.
+   * 
+   * @route GET /api/v1/attendance/records
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [enrollmentId] - Filter by enrollment ID
+   * @query {string} [sectionId] - Filter by section ID
+   * @query {string} [studentId] - Filter by student ID
+   * @query {string} [attendanceDate] - Filter by attendance date
+   * @query {string} [status] - Filter by status
+   * @returns {Object} Records array and pagination info
+   * 
+   * @example
+   * GET /api/v1/attendance/records?page=1&limit=20&sectionId=section123&status=present
+   */
   getAllAttendanceRecords = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -48,6 +77,16 @@ export class AttendanceController {
     }
   };
 
+  /**
+   * Get Attendance By ID Endpoint Handler
+   * 
+   * Retrieves a specific attendance record by ID.
+   * 
+   * @route GET /api/v1/attendance/records/:id
+   * @access Private
+   * @param {string} id - Attendance record ID
+   * @returns {AttendanceRecord} Attendance record object
+   */
   getAttendanceById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -59,6 +98,27 @@ export class AttendanceController {
     }
   };
 
+  /**
+   * Create Attendance Endpoint Handler
+   * 
+   * Creates a new attendance record.
+   * 
+   * @route POST /api/v1/attendance/records
+   * @access Private (Requires attendance.create permission)
+   * @body {CreateAttendanceDTO} Attendance creation data
+   * @returns {AttendanceRecord} Created attendance record
+   * 
+   * @example
+   * POST /api/v1/attendance/records
+   * Body: {
+   *   enrollmentId: "enrollment123",
+   *   sectionId: "section456",
+   *   studentId: "student789",
+   *   attendanceDate: "2024-10-15",
+   *   status: "present",
+   *   remarks: "On time"
+   * }
+   */
   createAttendance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const attendanceData: CreateAttendanceDTO = {
@@ -83,6 +143,27 @@ export class AttendanceController {
     }
   };
 
+  /**
+   * Bulk Create Attendance Endpoint Handler
+   * 
+   * Creates multiple attendance records for a section in a single operation.
+   * 
+   * @route POST /api/v1/attendance/records/bulk
+   * @access Private (Requires attendance.create permission)
+   * @body {BulkCreateAttendanceDTO} Bulk attendance creation data
+   * @returns {AttendanceRecord[]} Array of created attendance records
+   * 
+   * @example
+   * POST /api/v1/attendance/records/bulk
+   * Body: {
+   *   sectionId: "section123",
+   *   attendanceDate: "2024-10-15",
+   *   entries: [
+   *     { enrollmentId: "enrollment1", status: "present" },
+   *     { enrollmentId: "enrollment2", status: "absent", remarks: "Sick" }
+   *   ]
+   * }
+   */
   bulkCreateAttendance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const bulkData: BulkCreateAttendanceDTO = {
@@ -104,6 +185,26 @@ export class AttendanceController {
     }
   };
 
+  /**
+   * Update Attendance Endpoint Handler
+   * 
+   * Updates an existing attendance record.
+   * 
+   * @route PUT /api/v1/attendance/records/:id
+   * @access Private (Requires attendance.update permission)
+   * @param {string} id - Attendance record ID
+   * @body {Object} Update data
+   * @body {string} body.status - New attendance status
+   * @body {string} [body.remarks] - Optional remarks
+   * @returns {AttendanceRecord} Updated attendance record
+   * 
+   * @example
+   * PUT /api/v1/attendance/records/record123
+   * Body: {
+   *   status: "late",
+   *   remarks: "Arrived 10 minutes late"
+   * }
+   */
   updateAttendance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -126,6 +227,21 @@ export class AttendanceController {
     }
   };
 
+  /**
+   * Get Attendance Summary Endpoint Handler
+   * 
+   * Retrieves attendance summary for a specific enrollment.
+   * 
+   * @route GET /api/v1/attendance/summary/:enrollmentId
+   * @access Private
+   * @param {string} enrollmentId - Enrollment ID
+   * @query {string} [startDate] - Optional start date for date range
+   * @query {string} [endDate] - Optional end date for date range
+   * @returns {AttendanceSummary} Attendance summary with statistics
+   * 
+   * @example
+   * GET /api/v1/attendance/summary/enrollment123?startDate=2024-09-01&endDate=2024-10-31
+   */
   getAttendanceSummary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { enrollmentId } = req.params;
@@ -143,6 +259,20 @@ export class AttendanceController {
     }
   };
 
+  /**
+   * Get Section Attendance Report Endpoint Handler
+   * 
+   * Generates attendance report for a section on a specific date.
+   * 
+   * @route GET /api/v1/attendance/reports/section/:sectionId
+   * @access Private
+   * @param {string} sectionId - Section ID
+   * @query {string} date - Date for the report (YYYY-MM-DD)
+   * @returns {AttendanceReport} Section attendance report
+   * 
+   * @example
+   * GET /api/v1/attendance/reports/section/section123?date=2024-10-15
+   */
   getSectionAttendanceReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { sectionId } = req.params;
@@ -160,6 +290,22 @@ export class AttendanceController {
     }
   };
 
+  /**
+   * Get Student Attendance Report Endpoint Handler
+   * 
+   * Generates attendance report for a specific student in a section over a date range.
+   * 
+   * @route GET /api/v1/attendance/reports/student/:studentId/:sectionId
+   * @access Private
+   * @param {string} studentId - Student ID
+   * @param {string} sectionId - Section ID
+   * @query {string} startDate - Start date for the range (YYYY-MM-DD)
+   * @query {string} endDate - End date for the range (YYYY-MM-DD)
+   * @returns {StudentAttendanceReport} Student attendance report
+   * 
+   * @example
+   * GET /api/v1/attendance/reports/student/student123/section456?startDate=2024-09-01&endDate=2024-10-31
+   */
   getStudentAttendanceReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { studentId, sectionId } = req.params;
@@ -182,4 +328,3 @@ export class AttendanceController {
     }
   };
 }
-

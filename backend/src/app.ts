@@ -1,3 +1,11 @@
+/**
+ * Main Express Application Configuration
+ * 
+ * This module sets up the Express application with all middleware, routes, and error handling.
+ * 
+ * @module app
+ */
+
 import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -8,8 +16,21 @@ import { errorHandler, notFoundHandler } from '@/middleware/error.middleware';
 
 const app: Express = express();
 
-// Security middleware
+// ============================================================================
+// Security Middleware
+// ============================================================================
+
+/**
+ * Helmet.js - Sets various HTTP headers for security
+ * Helps protect against common vulnerabilities like XSS, clickjacking, etc.
+ */
 app.use(helmet());
+
+/**
+ * CORS Configuration
+ * Allows cross-origin requests from specified origins
+ * Credentials are enabled to allow cookies/auth headers
+ */
 app.use(
   cors({
     origin: env.cors.origin,
@@ -17,7 +38,11 @@ app.use(
   })
 );
 
-// Rate limiting
+/**
+ * Rate Limiting
+ * Prevents abuse by limiting the number of requests from a single IP
+ * Configuration: max requests per window (defined in env config)
+ */
 const limiter = rateLimit({
   windowMs: env.rateLimit.windowMs,
   max: env.rateLimit.maxRequests,
@@ -25,17 +50,46 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Body parsing middleware
+// ============================================================================
+// Body Parsing Middleware
+// ============================================================================
+
+/**
+ * JSON Body Parser
+ * Parses incoming JSON payloads up to 10MB
+ */
 app.use(express.json({ limit: '10mb' }));
+
+/**
+ * URL-encoded Body Parser
+ * Parses incoming form data up to 10MB
+ */
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Request logging middleware
+// ============================================================================
+// Request Logging Middleware
+// ============================================================================
+
+/**
+ * Request Logger
+ * Logs all incoming requests for debugging and monitoring
+ */
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.path}`);
   next();
 });
 
-// Health check endpoint
+// ============================================================================
+// Health Check Endpoint
+// ============================================================================
+
+/**
+ * Health Check Route
+ * Used by load balancers and monitoring tools to check service status
+ * 
+ * @route GET /health
+ * @returns {Object} Service status and timestamp
+ */
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -44,7 +98,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
+// ============================================================================
+// API Routes
+// ============================================================================
+
+// Import all route modules
 import authRoutes from '@/routes/auth.routes';
 import rbacRoutes from '@/routes/rbac.routes';
 import userRoutes from '@/routes/user.routes';
@@ -63,6 +121,8 @@ import administrationRoutes from '@/routes/administration.routes';
 import certificationRoutes from '@/routes/certification.routes';
 import multicampusRoutes from '@/routes/multicampus.routes';
 import dashboardRoutes from '@/routes/dashboard.routes';
+
+// Register all API routes with version prefix
 app.use(`/api/${env.apiVersion}/auth`, authRoutes);
 app.use(`/api/${env.apiVersion}/rbac`, rbacRoutes);
 app.use(`/api/${env.apiVersion}/users`, userRoutes);
@@ -82,9 +142,19 @@ app.use(`/api/${env.apiVersion}/certification`, certificationRoutes);
 app.use(`/api/${env.apiVersion}/multicampus`, multicampusRoutes);
 app.use(`/api/${env.apiVersion}/dashboard`, dashboardRoutes);
 
-// Error handling middleware (must be last)
+// ============================================================================
+// Error Handling Middleware
+// ============================================================================
+
+/**
+ * Error handling middleware must be registered last
+ * This ensures all errors are caught and handled consistently
+ */
+
+// 404 Handler - Catch all unmatched routes
 app.use(notFoundHandler);
+
+// Global Error Handler - Handle all errors
 app.use(errorHandler);
 
 export default app;
-

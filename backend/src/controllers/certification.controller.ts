@@ -1,3 +1,13 @@
+/**
+ * Certification Controller
+ * 
+ * Handles HTTP requests for certification endpoints.
+ * Manages certificate requests, certificates, verification, and templates.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/certification.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { CertificationService } from '@/services/certification.service';
 import {
@@ -19,6 +29,23 @@ export class CertificationController {
 
   // ==================== Certificate Requests ====================
 
+  /**
+   * Get All Certificate Requests Endpoint Handler
+   * 
+   * Retrieves all certificate requests with pagination and optional filters.
+   * 
+   * @route GET /api/v1/certification/requests
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [studentId] - Filter by student ID
+   * @query {string} [certificateType] - Filter by certificate type
+   * @query {string} [status] - Filter by request status
+   * @returns {Object} Certificate requests array and pagination info
+   * 
+   * @example
+   * GET /api/v1/certification/requests?page=1&limit=20&studentId=student123&status=pending
+   */
   getAllCertificateRequests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -50,6 +77,16 @@ export class CertificationController {
     }
   };
 
+  /**
+   * Get Certificate Request By ID Endpoint Handler
+   * 
+   * Retrieves a specific certificate request by ID.
+   * 
+   * @route GET /api/v1/certification/requests/:id
+   * @access Private
+   * @param {string} id - Certificate request ID
+   * @returns {CertificateRequest} Certificate request object
+   */
   getCertificateRequestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -61,6 +98,26 @@ export class CertificationController {
     }
   };
 
+  /**
+   * Create Certificate Request Endpoint Handler
+   * 
+   * Creates a new certificate request.
+   * 
+   * @route POST /api/v1/certification/requests
+   * @access Private
+   * @body {CreateCertificateRequestDTO} Certificate request creation data
+   * @returns {CertificateRequest} Created certificate request
+   * 
+   * @example
+   * POST /api/v1/certification/requests
+   * Body: {
+   *   studentId: "student123",
+   *   certificateType: "degree",
+   *   purpose: "Job application",
+   *   deliveryMethod: "postal",
+   *   deliveryAddress: "123 Main St, City, Country"
+   * }
+   */
   createCertificateRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const requestData: CreateCertificateRequestDTO = {
@@ -85,6 +142,24 @@ export class CertificationController {
     }
   };
 
+  /**
+   * Approve Certificate Request Endpoint Handler
+   * 
+   * Approves or rejects a certificate request.
+   * 
+   * @route POST /api/v1/certification/requests/:id/approve
+   * @access Private (Requires certification.approve permission)
+   * @param {string} id - Certificate request ID
+   * @body {ApproveCertificateRequestDTO} Approval/rejection data
+   * @returns {CertificateRequest} Updated certificate request
+   * 
+   * @example
+   * POST /api/v1/certification/requests/request123/approve
+   * Body: {
+   *   status: "approved",
+   *   remarks: "Approved for processing"
+   * }
+   */
   approveCertificateRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -111,6 +186,19 @@ export class CertificationController {
     }
   };
 
+  /**
+   * Mark Fee As Paid Endpoint Handler
+   * 
+   * Marks the fee for a certificate request as paid.
+   * 
+   * @route POST /api/v1/certification/requests/:id/mark-fee-paid
+   * @access Private (Requires certification.update permission)
+   * @param {string} id - Certificate request ID
+   * @returns {CertificateRequest} Updated certificate request
+   * 
+   * @example
+   * POST /api/v1/certification/requests/request123/mark-fee-paid
+   */
   markFeeAsPaid = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -124,6 +212,23 @@ export class CertificationController {
 
   // ==================== Certificates ====================
 
+  /**
+   * Get All Certificates Endpoint Handler
+   * 
+   * Retrieves all certificates with pagination and optional filters.
+   * 
+   * @route GET /api/v1/certification/certificates
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [studentId] - Filter by student ID
+   * @query {string} [certificateType] - Filter by certificate type
+   * @query {boolean} [isVerified] - Filter by verification status
+   * @returns {Object} Certificates array and pagination info
+   * 
+   * @example
+   * GET /api/v1/certification/certificates?page=1&limit=20&studentId=student123&certificateType=degree
+   */
   getAllCertificates = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -155,6 +260,16 @@ export class CertificationController {
     }
   };
 
+  /**
+   * Get Certificate By ID Endpoint Handler
+   * 
+   * Retrieves a specific certificate by ID.
+   * 
+   * @route GET /api/v1/certification/certificates/:id
+   * @access Private
+   * @param {string} id - Certificate ID
+   * @returns {Certificate} Certificate object
+   */
   getCertificateById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -166,6 +281,25 @@ export class CertificationController {
     }
   };
 
+  /**
+   * Process Certificate Endpoint Handler
+   * 
+   * Processes an approved certificate request and generates a certificate.
+   * 
+   * @route POST /api/v1/certification/certificates/process
+   * @access Private (Requires certification.create permission)
+   * @body {ProcessCertificateDTO} Certificate processing data
+   * @returns {Certificate} Created certificate
+   * 
+   * @example
+   * POST /api/v1/certification/certificates/process
+   * Body: {
+   *   certificateRequestId: "request123",
+   *   certificateNumber: "CERT-2024-0115-12345",
+   *   issueDate: "2024-01-15",
+   *   metadata: { studentName: "John Doe", degree: "BS Computer Science" }
+   * }
+   */
   processCertificate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const certificateData: ProcessCertificateDTO = {
@@ -189,6 +323,19 @@ export class CertificationController {
     }
   };
 
+  /**
+   * Mark Certificate As Ready Endpoint Handler
+   * 
+   * Marks a certificate as ready for delivery.
+   * 
+   * @route POST /api/v1/certification/certificates/:id/mark-ready
+   * @access Private (Requires certification.update permission)
+   * @param {string} id - Certificate ID
+   * @returns {Certificate} Certificate object
+   * 
+   * @example
+   * POST /api/v1/certification/certificates/cert123/mark-ready
+   */
   markCertificateAsReady = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -200,6 +347,26 @@ export class CertificationController {
     }
   };
 
+  /**
+   * Update Certificate URLs Endpoint Handler
+   * 
+   * Updates the QR code and/or PDF URLs for a certificate.
+   * 
+   * @route PUT /api/v1/certification/certificates/:id/urls
+   * @access Private (Requires certification.update permission)
+   * @param {string} id - Certificate ID
+   * @body {Object} URL data
+   * @body {string} [body.qrCodeUrl] - QR code URL
+   * @body {string} [body.pdfUrl] - PDF URL
+   * @returns {Certificate} Updated certificate
+   * 
+   * @example
+   * PUT /api/v1/certification/certificates/cert123/urls
+   * Body: {
+   *   qrCodeUrl: "https://example.com/qr/cert123.png",
+   *   pdfUrl: "https://example.com/pdf/cert123.pdf"
+   * }
+   */
   updateCertificateUrls = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -215,6 +382,25 @@ export class CertificationController {
 
   // ==================== Certificate Verification ====================
 
+  /**
+   * Verify Certificate Endpoint Handler (Public)
+   * 
+   * Verifies a certificate using verification code or certificate number.
+   * This is a public endpoint that doesn't require authentication.
+   * 
+   * @route POST /api/v1/certification/verify
+   * @route GET /api/v1/certification/verify
+   * @access Public
+   * @query {string} [verificationCode] - Verification code
+   * @query {string} [certificateNumber] - Certificate number
+   * @body {VerifyCertificateDTO} Verification data (POST only)
+   * @returns {CertificateVerificationResult} Verification result
+   * 
+   * @example
+   * GET /api/v1/certification/verify?verificationCode=VER-ABC123DEF456
+   * POST /api/v1/certification/verify
+   * Body: { verificationCode: "VER-ABC123DEF456" }
+   */
   verifyCertificate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const verifyData: VerifyCertificateDTO = {
@@ -241,6 +427,22 @@ export class CertificationController {
 
   // ==================== Certificate Templates ====================
 
+  /**
+   * Get All Certificate Templates Endpoint Handler
+   * 
+   * Retrieves all certificate templates with pagination and optional filters.
+   * 
+   * @route GET /api/v1/certification/templates
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [certificateType] - Filter by certificate type
+   * @query {boolean} [isActive] - Filter by active status
+   * @returns {Object} Certificate templates array and pagination info
+   * 
+   * @example
+   * GET /api/v1/certification/templates?page=1&limit=20&certificateType=degree&isActive=true
+   */
   getAllCertificateTemplates = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -271,6 +473,19 @@ export class CertificationController {
     }
   };
 
+  /**
+   * Get Active Certificate Template Endpoint Handler
+   * 
+   * Retrieves the active certificate template for a specific certificate type.
+   * 
+   * @route GET /api/v1/certification/templates/:certificateType/active
+   * @access Private
+   * @param {string} certificateType - Certificate type
+   * @returns {CertificateTemplate} Active certificate template
+   * 
+   * @example
+   * GET /api/v1/certification/templates/degree/active
+   */
   getActiveCertificateTemplate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { certificateType } = req.params;
@@ -282,4 +497,3 @@ export class CertificationController {
     }
   };
 }
-

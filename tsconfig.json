@@ -23,10 +23,19 @@
       "@/*": ["*"],
       "@/api/*": ["api/*"],
       "@/components/*": ["components/*"],
-      "@/contexts/*": ["contexts/*"]
+      "@/contexts/*": ["contexts/*"],
+      "@/hooks/*": ["hooks/*"],
+      "@/routes/*": ["Admin/routes/*"],
+      "@/utils/*": ["utils/*"],
+      "@/types/*": ["types/*"],
+      "@/constants/*": ["constants/*"]
     }
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
   ]
 }

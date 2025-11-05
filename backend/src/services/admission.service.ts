@@ -1,3 +1,23 @@
+/**
+ * Admission Service
+ * 
+ * This service handles all admission management business logic including:
+ * - Application CRUD operations
+ * - Eligibility checking and scoring
+ * - Merit list generation
+ * - Application status management
+ * - Document management
+ * 
+ * The admission process follows these steps:
+ * 1. Application submission
+ * 2. Eligibility check (minimum marks/CGPA, age limits, required subjects)
+ * 3. Merit scoring (academic history + test scores)
+ * 4. Merit list generation (ranked by score)
+ * 5. Selection/waitlisting based on available seats
+ * 
+ * @module services/admission.service
+ */
+
 import { AdmissionRepository } from '@/repositories/admission.repository';
 import {
   AdmissionApplication,
@@ -18,6 +38,28 @@ export class AdmissionService {
     this.admissionRepository = new AdmissionRepository();
   }
 
+  /**
+   * Get all applications with pagination and filters
+   * 
+   * Retrieves applications with optional filtering by program, status, batch,
+   * and search query. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of applications to return
+   * @param {number} [offset=0] - Number of applications to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.programId] - Filter by program ID
+   * @param {string} [filters.status] - Filter by application status
+   * @param {string} [filters.batch] - Filter by batch
+   * @param {string} [filters.search] - Search by application number
+   * @returns {Promise<{applications: AdmissionApplication[], total: number}>} Applications and total count
+   * 
+   * @example
+   * const { applications, total } = await admissionService.getAllApplications(20, 0, {
+   *   programId: 'prog123',
+   *   status: 'eligible',
+   *   search: 'APP-2024'
+   * });
+   */
   async getAllApplications(
     limit: number = 50,
     offset: number = 0,
@@ -32,6 +74,8 @@ export class AdmissionService {
     total: number;
   }> {
     try {
+      // Get all applications (for filtering)
+      // TODO: Move filtering to database level for better performance
       const allApplications = await this.admissionRepository.findAllApplications(limit * 10, 0, {
         programId: filters?.programId,
         status: filters?.status,
@@ -40,7 +84,7 @@ export class AdmissionService {
 
       let filteredApplications = allApplications;
 
-      // Apply search filter if provided
+      // Apply search filter if provided (by application number)
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
         filteredApplications = allApplications.filter(
@@ -62,6 +106,16 @@ export class AdmissionService {
     }
   }
 
+  /**
+   * Get application by ID
+   * 
+   * Retrieves a specific application by its ID with full details
+   * including user and program information.
+   * 
+   * @param {string} id - Application ID
+   * @returns {Promise<any>} Application with full details
+   * @throws {NotFoundError} If application not found
+   */
   async getApplicationById(id: string): Promise<any> {
     try {
       return await this.admissionRepository.getApplicationWithDetails(id);
@@ -74,6 +128,17 @@ export class AdmissionService {
     }
   }
 
+  /**
+   * Get user applications
+   * 
+   * Retrieves all applications submitted by a specific user.
+   * 
+   * @param {string} userId - User ID
+   * @returns {Promise<AdmissionApplication[]>} Array of user's applications
+   * 
+   * @example
+   * const applications = await admissionService.getUserApplications('user123');
+   */
   async getUserApplications(userId: string): Promise<AdmissionApplication[]> {
     try {
       return await this.admissionRepository.findApplicationsByUserId(userId);
@@ -83,6 +148,26 @@ export class AdmissionService {
     }
   }
 
+  /**
+   * Create a new application
+   * 
+   * Creates a new admission application with validation.
+   * Prevents duplicate active applications for the same program.
+   * 
+   * @param {CreateApplicationDTO} applicationData - Application creation data
+   * @returns {Promise<AdmissionApplication>} Created application
+   * @throws {ValidationError} If required fields are missing
+   * @throws {ConflictError} If user already has an active application
+   * 
+   * @example
+   * const application = await admissionService.createApplication({
+   *   userId: 'user123',
+   *   programId: 'prog456',
+   *   documents: [
+   *     { documentType: 'matric', documentName: 'Matric Certificate', documentUrl: '...' }
+   *   ]
+   * });
+   */
   async createApplication(applicationData: CreateApplicationDTO): Promise<AdmissionApplication> {
     try {
       // Validate required fields
@@ -102,6 +187,7 @@ export class AdmissionService {
         throw new ConflictError('You already have an active application for this program');
       }
 
+      // Create application
       const application = await this.admissionRepository.createApplication(applicationData);
 
       // Create documents if provided
@@ -128,6 +214,15 @@ export class AdmissionService {
     }
   }
 
+  /**
+   * Update an application
+   * 
+   * Updates an existing application's information.
+   * 
+   * @param {string} id - Application ID
+   * @param {UpdateApplicationDTO} applicationData - Partial application data to update
+   * @returns {Promise<AdmissionApplication>} Updated application
+   */
   async updateApplication(id: string, applicationData: UpdateApplicationDTO): Promise<AdmissionApplication> {
     try {
       return await this.admissionRepository.updateApplication(id, applicationData);
@@ -137,6 +232,34 @@ export class AdmissionService {
     }
   }
 
+  /**
+   * Check application eligibility
+   * 
+   * Checks if an application meets the eligibility criteria for a program.
+   * Evaluates minimum marks/CGPA, age limits, required subjects, and test scores.
+   * 
+   * Scoring system:
+   * - Base score: 50 points (if minimum marks requirement met)
+   * - Entry test: 30% weightage (if provided)
+   * - Interview: 20% weightage (if provided)
+   * 
+   * @param {EligibilityCheckDTO} checkData - Eligibility check data
+   * @returns {Promise<{eligible: boolean, score: number, criteria: EligibilityCriteria | null, reasons: string[]}>}
+   * Eligibility result with score and reasons
+   * 
+   * @example
+   * const result = await admissionService.checkEligibility({
+   *   applicationId: 'app123',
+   *   programId: 'prog456',
+   *   academicHistory: [
+   *     { degree: 'BS', marks: 85, cgpa: 3.4, year: 2024 }
+   *   ],
+   *   testScores: {
+   *     entryTest: 75,
+   *     interview: 80
+   *   }
+   * });
+   */
   async checkEligibility(checkData: EligibilityCheckDTO): Promise<{
     eligible: boolean;
     score: number;
@@ -144,6 +267,7 @@ export class AdmissionService {
     reasons: string[];
   }> {
     try {
+      // Get eligibility criteria for the program
       const criteria = await this.admissionRepository.getEligibilityCriteria(checkData.programId);
 
       if (!criteria) {
@@ -177,7 +301,7 @@ export class AdmissionService {
 
       // Check required subjects (if applicable)
       if (criteria.requiredSubjects && criteria.requiredSubjects.length > 0) {
-        // This would need to be checked against actual subject data
+        // TODO: Check against actual subject data from academic history
         // For now, we'll assume it passes if criteria exists
       }
 
@@ -221,6 +345,31 @@ export class AdmissionService {
     }
   }
 
+  /**
+   * Generate merit list
+   * 
+   * Generates a merit list for a program based on eligibility scores.
+   * Ranks applications by merit score and assigns selection/waitlist status.
+   * 
+   * Process:
+   * 1. Get all eligible applications for the program
+   * 2. Calculate merit scores (from eligibility scores)
+   * 3. Sort by merit score (descending)
+   * 4. Assign ranks
+   * 5. Mark as 'selected' (top N) or 'waitlisted' (remaining)
+   * 6. Update application statuses and merit ranks
+   * 
+   * @param {MeritListGenerateDTO} generateData - Merit list generation data
+   * @returns {Promise<MeritList>} Generated merit list with ranked applications
+   * 
+   * @example
+   * const meritList = await admissionService.generateMeritList({
+   *   programId: 'prog456',
+   *   batch: '2024-Fall',
+   *   semester: 'Fall',
+   *   totalSeats: 50
+   * });
+   */
   async generateMeritList(generateData: MeritListGenerateDTO): Promise<MeritList> {
     try {
       // Get all eligible applications for the program
@@ -283,7 +432,7 @@ export class AdmissionService {
         createdAt: new Date().toISOString(),
       };
 
-      // Note: This would need to be saved to database
+      // TODO: Save merit list to database
       // For now, we'll return the calculated merit list
 
       return meritList;
@@ -293,6 +442,14 @@ export class AdmissionService {
     }
   }
 
+  /**
+   * Get application documents
+   * 
+   * Retrieves all documents uploaded for an application.
+   * 
+   * @param {string} applicationId - Application ID
+   * @returns {Promise<AdmissionDocument[]>} Array of application documents
+   */
   async getApplicationDocuments(applicationId: string): Promise<AdmissionDocument[]> {
     try {
       return await this.admissionRepository.getApplicationDocuments(applicationId);
@@ -302,6 +459,16 @@ export class AdmissionService {
     }
   }
 
+  /**
+   * Update application status
+   * 
+   * Updates the status of an application (e.g., 'selected', 'rejected', 'enrolled').
+   * 
+   * @param {string} id - Application ID
+   * @param {AdmissionApplication['status']} status - New status
+   * @param {string} [reviewedBy] - ID of user who reviewed the application
+   * @returns {Promise<void>}
+   */
   async updateApplicationStatus(
     id: string,
     status: AdmissionApplication['status'],
@@ -315,4 +482,3 @@ export class AdmissionService {
     }
   }
 }
-

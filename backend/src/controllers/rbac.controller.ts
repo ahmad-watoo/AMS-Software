@@ -1,3 +1,12 @@
+/**
+ * RBAC Controller
+ * 
+ * Handles HTTP requests for Role-Based Access Control endpoints.
+ * Manages roles, permissions, and user-role assignments.
+ * 
+ * @module controllers/rbac.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { RBACService } from '@/services/rbac.service';
 import { CreateRoleDTO, AssignRoleDTO, AssignPermissionDTO } from '@/models/Role.model';
@@ -12,6 +21,12 @@ export class RBACController {
     this.rbacService = new RBACService();
   }
 
+  /**
+   * Get All Roles Endpoint Handler
+   * 
+   * @route GET /api/v1/rbac/roles
+   * @access Private
+   */
   getAllRoles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const roles = await this.rbacService.getAllRoles();
@@ -22,6 +37,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Get Role By ID Endpoint Handler
+   * 
+   * @route GET /api/v1/rbac/roles/:id
+   * @access Private
+   */
   getRoleById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -33,6 +54,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Create Role Endpoint Handler
+   * 
+   * @route POST /api/v1/rbac/roles
+   * @access Private (Admin only)
+   */
   createRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const roleData: CreateRoleDTO = {
@@ -57,6 +84,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Update Role Endpoint Handler
+   * 
+   * @route PUT /api/v1/rbac/roles/:id
+   * @access Private (Admin only)
+   */
   updateRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -74,6 +107,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Delete Role Endpoint Handler
+   * 
+   * @route DELETE /api/v1/rbac/roles/:id
+   * @access Private (Admin only)
+   */
   deleteRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -85,6 +124,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Get User Roles Endpoint Handler
+   * 
+   * @route GET /api/v1/rbac/users/:userId/roles
+   * @access Private
+   */
   getUserRoles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { userId } = req.params;
@@ -96,6 +141,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Assign Role To User Endpoint Handler
+   * 
+   * @route POST /api/v1/rbac/users/assign-role
+   * @access Private (Admin only)
+   */
   assignRoleToUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const assignData: AssignRoleDTO = {
@@ -122,6 +173,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Remove Role From User Endpoint Handler
+   * 
+   * @route POST /api/v1/rbac/users/remove-role
+   * @access Private (Admin only)
+   */
   removeRoleFromUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { userId, roleId } = req.body;
@@ -138,6 +195,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Get Role Permissions Endpoint Handler
+   * 
+   * @route GET /api/v1/rbac/roles/:roleId/permissions
+   * @access Private
+   */
   getRolePermissions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { roleId } = req.params;
@@ -149,6 +212,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Assign Permission To Role Endpoint Handler
+   * 
+   * @route POST /api/v1/rbac/roles/assign-permission
+   * @access Private (Admin only)
+   */
   assignPermissionToRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const assignData: AssignPermissionDTO = {
@@ -168,6 +237,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Remove Permission From Role Endpoint Handler
+   * 
+   * @route POST /api/v1/rbac/roles/remove-permission
+   * @access Private (Admin only)
+   */
   removePermissionFromRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { roleId, permissionId } = req.body;
@@ -184,6 +259,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Get All Permissions Endpoint Handler
+   * 
+   * @route GET /api/v1/rbac/permissions
+   * @access Private
+   */
   getAllPermissions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const permissions = await this.rbacService.getAllPermissions();
@@ -194,6 +275,12 @@ export class RBACController {
     }
   };
 
+  /**
+   * Get User Permissions Endpoint Handler
+   * 
+   * @route GET /api/v1/rbac/users/:userId/permissions
+   * @access Private
+   */
   getUserPermissions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { userId } = req.params;
@@ -205,4 +292,3 @@ export class RBACController {
     }
   };
 }
-

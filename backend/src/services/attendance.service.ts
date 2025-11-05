@@ -1,3 +1,21 @@
+/**
+ * Attendance Service
+ * 
+ * This service handles all attendance management business logic including:
+ * - Attendance record creation (individual and bulk)
+ * - Attendance record updates
+ * - Attendance summary calculations
+ * - Attendance reporting (section and student level)
+ * 
+ * The attendance system manages:
+ * - Daily attendance tracking (present, absent, late, excused)
+ * - Bulk attendance marking for entire sections
+ * - Attendance percentage calculations
+ * - Attendance reports and summaries
+ * 
+ * @module services/attendance.service
+ */
+
 import { AttendanceRepository } from '@/repositories/attendance.repository';
 import {
   AttendanceRecord,
@@ -17,6 +35,29 @@ export class AttendanceService {
     this.attendanceRepository = new AttendanceRepository();
   }
 
+  /**
+   * Get all attendance records with pagination and filters
+   * 
+   * Retrieves attendance records with optional filtering by enrollment,
+   * section, student, date, and status. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of records to return
+   * @param {number} [offset=0] - Number of records to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.enrollmentId] - Filter by enrollment ID
+   * @param {string} [filters.sectionId] - Filter by section ID
+   * @param {string} [filters.studentId] - Filter by student ID
+   * @param {string} [filters.attendanceDate] - Filter by attendance date
+   * @param {string} [filters.status] - Filter by status (present, absent, late, excused)
+   * @returns {Promise<{records: AttendanceRecord[], total: number}>} Records and total count
+   * 
+   * @example
+   * const { records, total } = await attendanceService.getAllAttendanceRecords(20, 0, {
+   *   sectionId: 'section123',
+   *   attendanceDate: '2024-10-15',
+   *   status: 'present'
+   * });
+   */
   async getAllAttendanceRecords(
     limit: number = 50,
     offset: number = 0,
@@ -45,6 +86,15 @@ export class AttendanceService {
     }
   }
 
+  /**
+   * Get attendance record by ID
+   * 
+   * Retrieves a specific attendance record by its ID.
+   * 
+   * @param {string} id - Attendance record ID
+   * @returns {Promise<AttendanceRecord>} Attendance record object
+   * @throws {NotFoundError} If record not found
+   */
   async getAttendanceById(id: string): Promise<AttendanceRecord> {
     try {
       const record = await this.attendanceRepository.findAttendanceById(id);
@@ -61,6 +111,27 @@ export class AttendanceService {
     }
   }
 
+  /**
+   * Create a new attendance record
+   * 
+   * Creates a new attendance record with validation.
+   * Validates required fields, date format, and status.
+   * 
+   * @param {CreateAttendanceDTO} attendanceData - Attendance creation data
+   * @param {string} [markedBy] - ID of user marking the attendance
+   * @returns {Promise<AttendanceRecord>} Created attendance record
+   * @throws {ValidationError} If attendance data is invalid
+   * 
+   * @example
+   * const record = await attendanceService.createAttendance({
+   *   enrollmentId: 'enrollment123',
+   *   sectionId: 'section456',
+   *   studentId: 'student789',
+   *   attendanceDate: '2024-10-15',
+   *   status: 'present',
+   *   remarks: 'On time'
+   * }, 'faculty123');
+   */
   async createAttendance(attendanceData: CreateAttendanceDTO, markedBy?: string): Promise<AttendanceRecord> {
     try {
       // Validate required fields
@@ -93,6 +164,28 @@ export class AttendanceService {
     }
   }
 
+  /**
+   * Bulk create attendance records
+   * 
+   * Creates multiple attendance records for a section in a single operation.
+   * Useful for marking attendance for an entire class at once.
+   * 
+   * @param {BulkCreateAttendanceDTO} bulkData - Bulk attendance creation data
+   * @param {string} [markedBy] - ID of user marking the attendance
+   * @returns {Promise<AttendanceRecord[]>} Array of created attendance records
+   * @throws {ValidationError} If bulk data is invalid
+   * 
+   * @example
+   * const records = await attendanceService.bulkCreateAttendance({
+   *   sectionId: 'section123',
+   *   attendanceDate: '2024-10-15',
+   *   entries: [
+   *     { enrollmentId: 'enrollment1', status: 'present' },
+   *     { enrollmentId: 'enrollment2', status: 'absent', remarks: 'Sick' },
+   *     { enrollmentId: 'enrollment3', status: 'late' }
+   *   ]
+   * }, 'faculty123');
+   */
   async bulkCreateAttendance(
     bulkData: BulkCreateAttendanceDTO,
     markedBy?: string
@@ -130,6 +223,18 @@ export class AttendanceService {
     }
   }
 
+  /**
+   * Update an attendance record
+   * 
+   * Updates an existing attendance record's status and remarks.
+   * 
+   * @param {string} id - Attendance record ID
+   * @param {'present' | 'absent' | 'late' | 'excused'} status - New attendance status
+   * @param {string} [remarks] - Optional remarks
+   * @returns {Promise<AttendanceRecord>} Updated attendance record
+   * @throws {NotFoundError} If record not found
+   * @throws {ValidationError} If status is invalid
+   */
   async updateAttendance(
     id: string,
     status: 'present' | 'absent' | 'late' | 'excused',
@@ -157,6 +262,27 @@ export class AttendanceService {
     }
   }
 
+  /**
+   * Get attendance summary for an enrollment
+   * 
+   * Calculates attendance statistics for a specific enrollment
+   * within an optional date range.
+   * 
+   * @param {string} enrollmentId - Enrollment ID
+   * @param {string} [startDate] - Optional start date for date range
+   * @param {string} [endDate] - Optional end date for date range
+   * @returns {Promise<AttendanceSummary>} Attendance summary with statistics
+   * @throws {ValidationError} If enrollment ID is missing
+   * @throws {NotFoundError} If summary not found
+   * 
+   * @example
+   * const summary = await attendanceService.getAttendanceSummary(
+   *   'enrollment123',
+   *   '2024-09-01',
+   *   '2024-10-31'
+   * );
+   * console.log(summary.attendancePercentage); // 85.5
+   */
   async getAttendanceSummary(
     enrollmentId: string,
     startDate?: string,
@@ -182,6 +308,26 @@ export class AttendanceService {
     }
   }
 
+  /**
+   * Get section attendance report for a specific date
+   * 
+   * Generates a comprehensive attendance report for a section on a specific date.
+   * Includes counts for each status and overall attendance percentage.
+   * 
+   * @param {string} sectionId - Section ID
+   * @param {string} attendanceDate - Date for the report (YYYY-MM-DD)
+   * @returns {Promise<AttendanceReport>} Section attendance report
+   * @throws {ValidationError} If section ID or date is missing
+   * 
+   * @example
+   * const report = await attendanceService.getSectionAttendanceReport(
+   *   'section123',
+   *   '2024-10-15'
+   * );
+   * console.log(report.attendancePercentage); // 92.5
+   * console.log(report.present); // 37
+   * console.log(report.absent); // 3
+   */
   async getSectionAttendanceReport(
     sectionId: string,
     attendanceDate: string
@@ -219,6 +365,30 @@ export class AttendanceService {
     }
   }
 
+  /**
+   * Get student attendance report for a date range
+   * 
+   * Generates a comprehensive attendance report for a specific student
+   * in a section over a date range.
+   * 
+   * @param {string} studentId - Student ID
+   * @param {string} sectionId - Section ID
+   * @param {string} startDate - Start date for the range (YYYY-MM-DD)
+   * @param {string} endDate - End date for the range (YYYY-MM-DD)
+   * @returns {Promise<StudentAttendanceReport>} Student attendance report
+   * @throws {ValidationError} If any parameter is missing
+   * 
+   * @example
+   * const report = await attendanceService.getStudentAttendanceReport(
+   *   'student123',
+   *   'section456',
+   *   '2024-09-01',
+   *   '2024-10-31'
+   * );
+   * console.log(report.attendancePercentage); // 88.2
+   * console.log(report.totalClasses); // 34
+   * console.log(report.present); // 30
+   */
   async getStudentAttendanceReport(
     studentId: string,
     sectionId: string,
@@ -269,4 +439,3 @@ export class AttendanceService {
     }
   }
 }
-

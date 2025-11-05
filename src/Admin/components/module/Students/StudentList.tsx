@@ -4,7 +4,7 @@ import { SearchOutlined, EditOutlined, DeleteOutlined, UserOutlined, EyeOutlined
 import { studentAPI, Student } from '../../../../api/student.api';
 import { useNavigate } from 'react-router-dom';
 import { PermissionGuard } from '../../../common/PermissionGuard';
-import { route } from '../../../routes/constant';
+import { route } from '@/routes/constant';
 
 const { Search } = Input;
 const { Option } = Select;

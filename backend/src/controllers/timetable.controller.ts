@@ -1,3 +1,13 @@
+/**
+ * Timetable Controller
+ * 
+ * Handles HTTP requests for timetable management endpoints.
+ * Manages timetables, rooms, and buildings.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/timetable.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { TimetableService } from '@/services/timetable.service';
 import {
@@ -20,6 +30,25 @@ export class TimetableController {
 
   // ==================== Timetables ====================
 
+  /**
+   * Get All Timetables Endpoint Handler
+   * 
+   * Retrieves all timetables with pagination and optional filters.
+   * 
+   * @route GET /api/v1/timetable/timetables
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [sectionId] - Filter by section ID
+   * @query {string} [facultyId] - Filter by faculty ID
+   * @query {string} [semester] - Filter by semester
+   * @query {number} [dayOfWeek] - Filter by day of week (1-7)
+   * @query {string} [roomId] - Filter by room ID
+   * @returns {Object} Timetables array and pagination info
+   * 
+   * @example
+   * GET /api/v1/timetable/timetables?page=1&limit=20&sectionId=section123&semester=2024-Fall
+   */
   getAllTimetables = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -53,6 +82,16 @@ export class TimetableController {
     }
   };
 
+  /**
+   * Get Timetable By ID Endpoint Handler
+   * 
+   * Retrieves a specific timetable by ID.
+   * 
+   * @route GET /api/v1/timetable/timetables/:id
+   * @access Private
+   * @param {string} id - Timetable ID
+   * @returns {Timetable} Timetable object
+   */
   getTimetableById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -64,6 +103,28 @@ export class TimetableController {
     }
   };
 
+  /**
+   * Create Timetable Endpoint Handler
+   * 
+   * Creates a new timetable entry with conflict detection.
+   * 
+   * @route POST /api/v1/timetable/timetables
+   * @access Private (Requires timetable.create permission)
+   * @body {CreateTimetableDTO} Timetable creation data
+   * @returns {Object} Created timetable and conflicts array
+   * 
+   * @example
+   * POST /api/v1/timetable/timetables
+   * Body: {
+   *   sectionId: "section123",
+   *   dayOfWeek: 1,
+   *   startTime: "09:00",
+   *   endTime: "10:30",
+   *   roomId: "room456",
+   *   facultyId: "faculty789",
+   *   semester: "2024-Fall"
+   * }
+   */
   createTimetable = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const timetableData: CreateTimetableDTO = {
@@ -88,6 +149,25 @@ export class TimetableController {
     }
   };
 
+  /**
+   * Update Timetable Endpoint Handler
+   * 
+   * Updates an existing timetable entry with conflict detection.
+   * 
+   * @route PUT /api/v1/timetable/timetables/:id
+   * @access Private (Requires timetable.update permission)
+   * @param {string} id - Timetable ID
+   * @body {UpdateTimetableDTO} Partial timetable data to update
+   * @returns {Timetable} Updated timetable
+   * 
+   * @example
+   * PUT /api/v1/timetable/timetables/timetable123
+   * Body: {
+   *   startTime: "10:00",
+   *   endTime: "11:30",
+   *   roomId: "room789"
+   * }
+   */
   updateTimetable = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -107,6 +187,16 @@ export class TimetableController {
     }
   };
 
+  /**
+   * Delete Timetable Endpoint Handler
+   * 
+   * Deletes a timetable entry.
+   * 
+   * @route DELETE /api/v1/timetable/timetables/:id
+   * @access Private (Requires timetable.delete permission)
+   * @param {string} id - Timetable ID
+   * @returns {message: "Timetable deleted successfully"}
+   */
   deleteTimetable = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -120,6 +210,23 @@ export class TimetableController {
 
   // ==================== Rooms ====================
 
+  /**
+   * Get All Rooms Endpoint Handler
+   * 
+   * Retrieves all rooms with pagination and optional filters.
+   * 
+   * @route GET /api/v1/timetable/rooms
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [buildingId] - Filter by building ID
+   * @query {string} [roomType] - Filter by room type
+   * @query {boolean} [isActive] - Filter by active status
+   * @returns {Object} Rooms array and pagination info
+   * 
+   * @example
+   * GET /api/v1/timetable/rooms?page=1&limit=20&buildingId=building123&roomType=classroom
+   */
   getAllRooms = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -151,6 +258,16 @@ export class TimetableController {
     }
   };
 
+  /**
+   * Get Room By ID Endpoint Handler
+   * 
+   * Retrieves a specific room by ID.
+   * 
+   * @route GET /api/v1/timetable/rooms/:id
+   * @access Private
+   * @param {string} id - Room ID
+   * @returns {Room} Room object
+   */
   getRoomById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -162,6 +279,26 @@ export class TimetableController {
     }
   };
 
+  /**
+   * Create Room Endpoint Handler
+   * 
+   * Creates a new room.
+   * 
+   * @route POST /api/v1/timetable/rooms
+   * @access Private (Requires timetable.create permission)
+   * @body {CreateRoomDTO} Room creation data
+   * @returns {Room} Created room
+   * 
+   * @example
+   * POST /api/v1/timetable/rooms
+   * Body: {
+   *   roomNumber: "101",
+   *   buildingId: "building123",
+   *   roomType: "classroom",
+   *   capacity: 30,
+   *   facilities: ["projector", "whiteboard"]
+   * }
+   */
   createRoom = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const roomData: CreateRoomDTO = {
@@ -184,6 +321,24 @@ export class TimetableController {
     }
   };
 
+  /**
+   * Update Room Endpoint Handler
+   * 
+   * Updates an existing room.
+   * 
+   * @route PUT /api/v1/timetable/rooms/:id
+   * @access Private (Requires timetable.update permission)
+   * @param {string} id - Room ID
+   * @body {UpdateRoomDTO} Partial room data to update
+   * @returns {Room} Updated room
+   * 
+   * @example
+   * PUT /api/v1/timetable/rooms/room123
+   * Body: {
+   *   capacity: 35,
+   *   facilities: ["projector", "whiteboard", "smartboard"]
+   * }
+   */
   updateRoom = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -206,6 +361,17 @@ export class TimetableController {
 
   // ==================== Buildings ====================
 
+  /**
+   * Get All Buildings Endpoint Handler
+   * 
+   * Retrieves all buildings with pagination.
+   * 
+   * @route GET /api/v1/timetable/buildings
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @returns {Object} Buildings array and pagination info
+   */
   getAllBuildings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -231,6 +397,16 @@ export class TimetableController {
     }
   };
 
+  /**
+   * Get Building By ID Endpoint Handler
+   * 
+   * Retrieves a specific building by ID.
+   * 
+   * @route GET /api/v1/timetable/buildings/:id
+   * @access Private
+   * @param {string} id - Building ID
+   * @returns {Building} Building object
+   */
   getBuildingById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -242,6 +418,26 @@ export class TimetableController {
     }
   };
 
+  /**
+   * Create Building Endpoint Handler
+   * 
+   * Creates a new building.
+   * 
+   * @route POST /api/v1/timetable/buildings
+   * @access Private (Requires timetable.create permission)
+   * @body {CreateBuildingDTO} Building creation data
+   * @returns {Building} Created building
+   * 
+   * @example
+   * POST /api/v1/timetable/buildings
+   * Body: {
+   *   name: "Science Building",
+   *   code: "SB",
+   *   campusId: "campus123",
+   *   floors: 5,
+   *   address: "123 Science Street"
+   * }
+   */
   createBuilding = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const buildingData: CreateBuildingDTO = {
@@ -264,4 +460,3 @@ export class TimetableController {
     }
   };
 }
-

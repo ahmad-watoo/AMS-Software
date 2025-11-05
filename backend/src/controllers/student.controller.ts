@@ -1,3 +1,12 @@
+/**
+ * Student Controller
+ * 
+ * Handles HTTP requests for student management endpoints.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/student.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { StudentService } from '@/services/student.service';
 import { CreateStudentDTO, UpdateStudentDTO, StudentSearchFilters } from '@/models/Student.model';
@@ -12,6 +21,25 @@ export class StudentController {
     this.studentService = new StudentService();
   }
 
+  /**
+   * Get All Students Endpoint Handler
+   * 
+   * Retrieves all students with pagination and optional filters.
+   * 
+   * @route GET /api/v1/students
+   * @access Private (Requires student.read permission)
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [search] - Search query
+   * @query {string} [programId] - Filter by program ID
+   * @query {string} [batch] - Filter by batch
+   * @query {string} [enrollmentStatus] - Filter by enrollment status
+   * @query {number} [currentSemester] - Filter by current semester
+   * @returns {Object} Students array and pagination info
+   * 
+   * @example
+   * GET /api/v1/students?page=1&limit=20&search=BS2024&programId=prog123
+   */
   getAllStudents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -45,6 +73,16 @@ export class StudentController {
     }
   };
 
+  /**
+   * Get Student By ID Endpoint Handler
+   * 
+   * Retrieves a specific student by ID with full details.
+   * 
+   * @route GET /api/v1/students/:id
+   * @access Private
+   * @param {string} id - Student ID
+   * @returns {StudentWithUser} Student with user and program details
+   */
   getStudentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -56,6 +94,16 @@ export class StudentController {
     }
   };
 
+  /**
+   * Get Student By User ID Endpoint Handler
+   * 
+   * Retrieves a student record associated with a user ID.
+   * 
+   * @route GET /api/v1/students/user/:userId
+   * @access Private
+   * @param {string} userId - User ID
+   * @returns {StudentWithUser} Student with user and program details
+   */
   getStudentByUserId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { userId } = req.params;
@@ -67,6 +115,26 @@ export class StudentController {
     }
   };
 
+  /**
+   * Create Student Endpoint Handler
+   * 
+   * Creates a new student record.
+   * 
+   * @route POST /api/v1/students
+   * @access Private (Requires student.create permission)
+   * @body {CreateStudentDTO} Student creation data
+   * @returns {Student} Created student
+   * 
+   * @example
+   * POST /api/v1/students
+   * Body: {
+   *   userId: "user123",
+   *   rollNumber: "BS2024-001",
+   *   programId: "prog456",
+   *   batch: "2024-Fall",
+   *   admissionDate: "2024-09-01"
+   * }
+   */
   createStudent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const studentData: CreateStudentDTO = {
@@ -95,6 +163,24 @@ export class StudentController {
     }
   };
 
+  /**
+   * Update Student Endpoint Handler
+   * 
+   * Updates an existing student's information.
+   * 
+   * @route PUT /api/v1/students/:id
+   * @access Private (Requires student.update permission)
+   * @param {string} id - Student ID
+   * @body {UpdateStudentDTO} Partial student data to update
+   * @returns {Student} Updated student
+   * 
+   * @example
+   * PUT /api/v1/students/student123
+   * Body: {
+   *   currentSemester: 2,
+   *   enrollmentStatus: "active"
+   * }
+   */
   updateStudent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -119,6 +205,16 @@ export class StudentController {
     }
   };
 
+  /**
+   * Delete Student Endpoint Handler
+   * 
+   * Deletes a student record.
+   * 
+   * @route DELETE /api/v1/students/:id
+   * @access Private (Requires student.delete permission)
+   * @param {string} id - Student ID
+   * @returns {message: "Student deleted successfully"}
+   */
   deleteStudent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -130,6 +226,17 @@ export class StudentController {
     }
   };
 
+  /**
+   * Get Student Enrollments Endpoint Handler
+   * 
+   * Retrieves all course enrollments for a student.
+   * 
+   * @route GET /api/v1/students/:id/enrollments
+   * @access Private
+   * @param {string} id - Student ID
+   * @query {string} [semester] - Optional semester filter
+   * @returns {Array} Array of enrollments with course details
+   */
   getStudentEnrollments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -142,6 +249,17 @@ export class StudentController {
     }
   };
 
+  /**
+   * Get Student Results Endpoint Handler
+   * 
+   * Retrieves all exam results for a student.
+   * 
+   * @route GET /api/v1/students/:id/results
+   * @access Private
+   * @param {string} id - Student ID
+   * @query {string} [semester] - Optional semester filter
+   * @returns {Array} Array of results with course and grade details
+   */
   getStudentResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -154,6 +272,16 @@ export class StudentController {
     }
   };
 
+  /**
+   * Get Student CGPA Endpoint Handler
+   * 
+   * Calculates and returns the student's CGPA.
+   * 
+   * @route GET /api/v1/students/:id/cgpa
+   * @access Private
+   * @param {string} id - Student ID
+   * @returns {Object} CGPA value
+   */
   getStudentCGPA = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -165,4 +293,3 @@ export class StudentController {
     }
   };
 }
-

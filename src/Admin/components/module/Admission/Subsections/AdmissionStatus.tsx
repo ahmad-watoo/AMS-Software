@@ -4,7 +4,7 @@ import { SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import { admissionAPI, AdmissionApplication } from '@/api/admission.api';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { route } from '../../../../routes/constant';
+import { route } from '@/routes/constant';
 
 const { Search } = Input;
 const { Option } = Select;

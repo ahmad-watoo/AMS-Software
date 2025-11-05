@@ -1,3 +1,13 @@
+/**
+ * Learning Management Controller
+ * 
+ * Handles HTTP requests for learning management endpoints.
+ * Manages course materials, assignments, and submissions.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/learning.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { LearningService } from '@/services/learning.service';
 import {
@@ -21,6 +31,24 @@ export class LearningController {
 
   // ==================== Course Materials ====================
 
+  /**
+   * Get All Course Materials Endpoint Handler
+   * 
+   * Retrieves all course materials with pagination and optional filters.
+   * 
+   * @route GET /api/v1/learning/materials
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [sectionId] - Filter by section ID
+   * @query {string} [courseId] - Filter by course ID
+   * @query {string} [materialType] - Filter by material type
+   * @query {boolean} [isVisible] - Filter by visibility status
+   * @returns {Object} Materials array and pagination info
+   * 
+   * @example
+   * GET /api/v1/learning/materials?page=1&limit=20&sectionId=section123&materialType=document
+   */
   getAllCourseMaterials = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -53,6 +81,16 @@ export class LearningController {
     }
   };
 
+  /**
+   * Get Course Material By ID Endpoint Handler
+   * 
+   * Retrieves a specific course material by ID.
+   * 
+   * @route GET /api/v1/learning/materials/:id
+   * @access Private
+   * @param {string} id - Course material ID
+   * @returns {CourseMaterial} Course material object
+   */
   getCourseMaterialById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -64,6 +102,27 @@ export class LearningController {
     }
   };
 
+  /**
+   * Create Course Material Endpoint Handler
+   * 
+   * Creates a new course material.
+   * 
+   * @route POST /api/v1/learning/materials
+   * @access Private (Requires learning.create permission)
+   * @body {CreateCourseMaterialDTO} Material creation data
+   * @returns {CourseMaterial} Created course material
+   * 
+   * @example
+   * POST /api/v1/learning/materials
+   * Body: {
+   *   sectionId: "section123",
+   *   courseId: "course456",
+   *   title: "Introduction to Data Structures",
+   *   materialType: "document",
+   *   fileUrl: "https://example.com/file.pdf",
+   *   fileName: "lecture1.pdf"
+   * }
+   */
   createCourseMaterial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const materialData: CreateCourseMaterialDTO = {
@@ -93,6 +152,24 @@ export class LearningController {
     }
   };
 
+  /**
+   * Update Course Material Endpoint Handler
+   * 
+   * Updates an existing course material.
+   * 
+   * @route PUT /api/v1/learning/materials/:id
+   * @access Private (Requires learning.update permission)
+   * @param {string} id - Course material ID
+   * @body {UpdateCourseMaterialDTO} Partial material data to update
+   * @returns {CourseMaterial} Updated course material
+   * 
+   * @example
+   * PUT /api/v1/learning/materials/material123
+   * Body: {
+   *   title: "Updated Material Title",
+   *   isVisible: false
+   * }
+   */
   updateCourseMaterial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -113,6 +190,23 @@ export class LearningController {
 
   // ==================== Assignments ====================
 
+  /**
+   * Get All Assignments Endpoint Handler
+   * 
+   * Retrieves all assignments with pagination and optional filters.
+   * 
+   * @route GET /api/v1/learning/assignments
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [sectionId] - Filter by section ID
+   * @query {string} [courseId] - Filter by course ID
+   * @query {boolean} [isPublished] - Filter by publication status
+   * @returns {Object} Assignments array and pagination info
+   * 
+   * @example
+   * GET /api/v1/learning/assignments?page=1&limit=20&sectionId=section123&isPublished=true
+   */
   getAllAssignments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -144,6 +238,16 @@ export class LearningController {
     }
   };
 
+  /**
+   * Get Assignment By ID Endpoint Handler
+   * 
+   * Retrieves a specific assignment by ID.
+   * 
+   * @route GET /api/v1/learning/assignments/:id
+   * @access Private
+   * @param {string} id - Assignment ID
+   * @returns {Assignment} Assignment object
+   */
   getAssignmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -155,6 +259,28 @@ export class LearningController {
     }
   };
 
+  /**
+   * Create Assignment Endpoint Handler
+   * 
+   * Creates a new assignment.
+   * 
+   * @route POST /api/v1/learning/assignments
+   * @access Private (Requires learning.create permission)
+   * @body {CreateAssignmentDTO} Assignment creation data
+   * @returns {Assignment} Created assignment
+   * 
+   * @example
+   * POST /api/v1/learning/assignments
+   * Body: {
+   *   sectionId: "section123",
+   *   courseId: "course456",
+   *   title: "Data Structures Assignment 1",
+   *   dueDate: "2024-11-15",
+   *   maxMarks: 100,
+   *   assignmentType: "individual",
+   *   isPublished: true
+   * }
+   */
   createAssignment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const assignmentData: CreateAssignmentDTO = {
@@ -183,6 +309,25 @@ export class LearningController {
     }
   };
 
+  /**
+   * Update Assignment Endpoint Handler
+   * 
+   * Updates an existing assignment.
+   * 
+   * @route PUT /api/v1/learning/assignments/:id
+   * @access Private (Requires learning.update permission)
+   * @param {string} id - Assignment ID
+   * @body {UpdateAssignmentDTO} Partial assignment data to update
+   * @returns {Assignment} Updated assignment
+   * 
+   * @example
+   * PUT /api/v1/learning/assignments/assignment123
+   * Body: {
+   *   title: "Updated Assignment Title",
+   *   maxMarks: 120,
+   *   isPublished: true
+   * }
+   */
   updateAssignment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -205,6 +350,24 @@ export class LearningController {
 
   // ==================== Assignment Submissions ====================
 
+  /**
+   * Get All Submissions Endpoint Handler
+   * 
+   * Retrieves all assignment submissions with pagination and optional filters.
+   * 
+   * @route GET /api/v1/learning/submissions
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [assignmentId] - Filter by assignment ID
+   * @query {string} [studentId] - Filter by student ID
+   * @query {string} [sectionId] - Filter by section ID
+   * @query {string} [status] - Filter by status
+   * @returns {Object} Submissions array and pagination info
+   * 
+   * @example
+   * GET /api/v1/learning/submissions?page=1&limit=20&assignmentId=assignment123&status=submitted
+   */
   getAllSubmissions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -237,6 +400,16 @@ export class LearningController {
     }
   };
 
+  /**
+   * Get Submission By ID Endpoint Handler
+   * 
+   * Retrieves a specific submission by ID.
+   * 
+   * @route GET /api/v1/learning/submissions/:id
+   * @access Private
+   * @param {string} id - Submission ID
+   * @returns {AssignmentSubmission} Submission object
+   */
   getSubmissionById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -248,6 +421,29 @@ export class LearningController {
     }
   };
 
+  /**
+   * Create Submission Endpoint Handler
+   * 
+   * Creates a new assignment submission.
+   * 
+   * @route POST /api/v1/learning/submissions
+   * @access Private
+   * @body {CreateAssignmentSubmissionDTO} Submission creation data
+   * @returns {AssignmentSubmission} Created submission
+   * 
+   * @example
+   * POST /api/v1/learning/submissions
+   * Body: {
+   *   assignmentId: "assignment123",
+   *   enrollmentId: "enrollment456",
+   *   studentId: "student789",
+   *   sectionId: "section012",
+   *   submissionFiles: [
+   *     { fileName: "assignment.pdf", fileUrl: "https://example.com/file.pdf", fileSize: 1024000 }
+   *   ],
+   *   submittedText: "See attached file for solution"
+   * }
+   */
   createSubmission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const submissionData: CreateAssignmentSubmissionDTO = {
@@ -271,6 +467,26 @@ export class LearningController {
     }
   };
 
+  /**
+   * Grade Submission Endpoint Handler
+   * 
+   * Grades an assignment submission.
+   * 
+   * @route POST /api/v1/learning/submissions/:id/grade
+   * @access Private (Requires learning.update permission)
+   * @param {string} id - Submission ID
+   * @body {Object} Grading data
+   * @body {number} body.obtainedMarks - Obtained marks
+   * @body {string} [body.feedback] - Optional feedback
+   * @returns {AssignmentSubmission} Graded submission
+   * 
+   * @example
+   * POST /api/v1/learning/submissions/submission123/grade
+   * Body: {
+   *   obtainedMarks: 85,
+   *   feedback: "Good work! Well structured solution."
+   * }
+   */
   gradeSubmission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -293,4 +509,3 @@ export class LearningController {
     }
   };
 }
-

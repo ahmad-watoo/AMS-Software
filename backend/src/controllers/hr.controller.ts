@@ -1,3 +1,13 @@
+/**
+ * HR Controller
+ * 
+ * Handles HTTP requests for Human Resources management endpoints.
+ * Manages employees, leave requests, job postings, and applications.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/hr.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { HRService } from '@/services/hr.service';
 import {
@@ -21,6 +31,24 @@ export class HRController {
 
   // ==================== Employees ====================
 
+  /**
+   * Get All Employees Endpoint Handler
+   * 
+   * Retrieves all employees with pagination and optional filters.
+   * 
+   * @route GET /api/v1/hr/employees
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [departmentId] - Filter by department ID
+   * @query {string} [designation] - Filter by designation
+   * @query {string} [employmentType] - Filter by employment type
+   * @query {boolean} [isActive] - Filter by active status
+   * @returns {Object} Employees array and pagination info
+   * 
+   * @example
+   * GET /api/v1/hr/employees?page=1&limit=20&departmentId=dept123&employmentType=permanent
+   */
   getAllEmployees = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -53,6 +81,16 @@ export class HRController {
     }
   };
 
+  /**
+   * Get Employee By ID Endpoint Handler
+   * 
+   * Retrieves a specific employee by ID.
+   * 
+   * @route GET /api/v1/hr/employees/:id
+   * @access Private
+   * @param {string} id - Employee ID
+   * @returns {Employee} Employee object
+   */
   getEmployeeById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -64,6 +102,26 @@ export class HRController {
     }
   };
 
+  /**
+   * Create Employee Endpoint Handler
+   * 
+   * Creates a new employee record.
+   * 
+   * @route POST /api/v1/hr/employees
+   * @access Private (Requires hr.create permission)
+   * @body {CreateEmployeeDTO} Employee creation data
+   * @returns {Employee} Created employee
+   * 
+   * @example
+   * POST /api/v1/hr/employees
+   * Body: {
+   *   userId: "user123",
+   *   employeeId: "EMP001",
+   *   designation: "Assistant Professor",
+   *   joiningDate: "2024-01-15",
+   *   employmentType: "permanent"
+   * }
+   */
   createEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const employeeData: CreateEmployeeDTO = {
@@ -90,6 +148,24 @@ export class HRController {
     }
   };
 
+  /**
+   * Update Employee Endpoint Handler
+   * 
+   * Updates an existing employee record.
+   * 
+   * @route PUT /api/v1/hr/employees/:id
+   * @access Private (Requires hr.update permission)
+   * @param {string} id - Employee ID
+   * @body {UpdateEmployeeDTO} Partial employee data to update
+   * @returns {Employee} Updated employee
+   * 
+   * @example
+   * PUT /api/v1/hr/employees/employee123
+   * Body: {
+   *   designation: "Associate Professor",
+   *   salary: 150000
+   * }
+   */
   updateEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -113,6 +189,23 @@ export class HRController {
 
   // ==================== Leave Requests ====================
 
+  /**
+   * Get All Leave Requests Endpoint Handler
+   * 
+   * Retrieves all leave requests with pagination and optional filters.
+   * 
+   * @route GET /api/v1/hr/leave-requests
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [employeeId] - Filter by employee ID
+   * @query {string} [status] - Filter by status
+   * @query {string} [leaveType] - Filter by leave type
+   * @returns {Object} Leave requests array and pagination info
+   * 
+   * @example
+   * GET /api/v1/hr/leave-requests?page=1&limit=20&employeeId=employee123&status=pending
+   */
   getAllLeaveRequests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -144,6 +237,16 @@ export class HRController {
     }
   };
 
+  /**
+   * Get Leave Request By ID Endpoint Handler
+   * 
+   * Retrieves a specific leave request by ID.
+   * 
+   * @route GET /api/v1/hr/leave-requests/:id
+   * @access Private
+   * @param {string} id - Leave request ID
+   * @returns {LeaveRequest} Leave request object
+   */
   getLeaveRequestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -155,6 +258,26 @@ export class HRController {
     }
   };
 
+  /**
+   * Create Leave Request Endpoint Handler
+   * 
+   * Creates a new leave request.
+   * 
+   * @route POST /api/v1/hr/leave-requests
+   * @access Private
+   * @body {CreateLeaveRequestDTO} Leave request creation data
+   * @returns {LeaveRequest} Created leave request
+   * 
+   * @example
+   * POST /api/v1/hr/leave-requests
+   * Body: {
+   *   employeeId: "employee123",
+   *   leaveType: "annual",
+   *   startDate: "2024-11-01",
+   *   endDate: "2024-11-05",
+   *   reason: "Family vacation"
+   * }
+   */
   createLeaveRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const leaveData: CreateLeaveRequestDTO = {
@@ -177,6 +300,24 @@ export class HRController {
     }
   };
 
+  /**
+   * Approve Leave Request Endpoint Handler
+   * 
+   * Approves or rejects a leave request.
+   * 
+   * @route POST /api/v1/hr/leave-requests/:id/approve
+   * @access Private (Requires hr.approve permission)
+   * @param {string} id - Leave request ID
+   * @body {ApproveLeaveDTO} Approval/rejection data
+   * @returns {LeaveRequest} Updated leave request
+   * 
+   * @example
+   * POST /api/v1/hr/leave-requests/request123/approve
+   * Body: {
+   *   status: "approved",
+   *   remarks: "Approved for annual leave"
+   * }
+   */
   approveLeaveRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -199,6 +340,19 @@ export class HRController {
     }
   };
 
+  /**
+   * Get Leave Balance Endpoint Handler
+   * 
+   * Retrieves leave balance for a specific employee.
+   * 
+   * @route GET /api/v1/hr/employees/:employeeId/leave-balance
+   * @access Private
+   * @param {string} employeeId - Employee ID
+   * @returns {LeaveBalance} Leave balance with used and remaining leaves
+   * 
+   * @example
+   * GET /api/v1/hr/employees/employee123/leave-balance
+   */
   getLeaveBalance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { employeeId } = req.params;
@@ -212,6 +366,23 @@ export class HRController {
 
   // ==================== Job Postings ====================
 
+  /**
+   * Get All Job Postings Endpoint Handler
+   * 
+   * Retrieves all job postings with pagination and optional filters.
+   * 
+   * @route GET /api/v1/hr/job-postings
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [departmentId] - Filter by department ID
+   * @query {string} [status] - Filter by status
+   * @query {string} [employmentType] - Filter by employment type
+   * @returns {Object} Job postings array and pagination info
+   * 
+   * @example
+   * GET /api/v1/hr/job-postings?page=1&limit=20&departmentId=dept123&status=published
+   */
   getAllJobPostings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -243,6 +414,16 @@ export class HRController {
     }
   };
 
+  /**
+   * Get Job Posting By ID Endpoint Handler
+   * 
+   * Retrieves a specific job posting by ID.
+   * 
+   * @route GET /api/v1/hr/job-postings/:id
+   * @access Private
+   * @param {string} id - Job posting ID
+   * @returns {JobPosting} Job posting object
+   */
   getJobPostingById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -254,6 +435,26 @@ export class HRController {
     }
   };
 
+  /**
+   * Create Job Posting Endpoint Handler
+   * 
+   * Creates a new job posting.
+   * 
+   * @route POST /api/v1/hr/job-postings
+   * @access Private (Requires hr.create permission)
+   * @body {CreateJobPostingDTO} Job posting creation data
+   * @returns {JobPosting} Created job posting
+   * 
+   * @example
+   * POST /api/v1/hr/job-postings
+   * Body: {
+   *   title: "Assistant Professor - Computer Science",
+   *   departmentId: "dept123",
+   *   description: "Teaching and research position",
+   *   deadline: "2024-12-31",
+   *   employmentType: "permanent"
+   * }
+   */
   createJobPosting = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const jobData: CreateJobPostingDTO = {
@@ -282,6 +483,22 @@ export class HRController {
 
   // ==================== Job Applications ====================
 
+  /**
+   * Get All Job Applications Endpoint Handler
+   * 
+   * Retrieves all job applications with pagination and optional filters.
+   * 
+   * @route GET /api/v1/hr/job-applications
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [jobPostingId] - Filter by job posting ID
+   * @query {string} [status] - Filter by status
+   * @returns {Object} Applications array and pagination info
+   * 
+   * @example
+   * GET /api/v1/hr/job-applications?page=1&limit=20&jobPostingId=posting123&status=pending
+   */
   getAllJobApplications = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -312,6 +529,26 @@ export class HRController {
     }
   };
 
+  /**
+   * Create Job Application Endpoint Handler
+   * 
+   * Submits a new job application.
+   * 
+   * @route POST /api/v1/hr/job-applications
+   * @access Private
+   * @body {CreateJobApplicationDTO} Job application creation data
+   * @returns {JobApplication} Created job application
+   * 
+   * @example
+   * POST /api/v1/hr/job-applications
+   * Body: {
+   *   jobPostingId: "posting123",
+   *   applicantName: "John Doe",
+   *   applicantEmail: "john@example.com",
+   *   applicantCNIC: "12345-1234567-1",
+   *   resumeUrl: "https://example.com/resume.pdf"
+   * }
+   */
   createJobApplication = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const applicationData: CreateJobApplicationDTO = {
@@ -336,4 +573,3 @@ export class HRController {
     }
   };
 }
-

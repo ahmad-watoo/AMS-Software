@@ -1,3 +1,13 @@
+/**
+ * Finance Controller
+ * 
+ * Handles HTTP requests for finance management endpoints.
+ * Manages fee structures, student fees, payments, and financial reports.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/finance.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { FinanceService } from '@/services/finance.service';
 import {
@@ -18,6 +28,24 @@ export class FinanceController {
 
   // ==================== Fee Structures ====================
 
+  /**
+   * Get All Fee Structures Endpoint Handler
+   * 
+   * Retrieves all fee structures with pagination and optional filters.
+   * 
+   * @route GET /api/v1/finance/fee-structures
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [programId] - Filter by program ID
+   * @query {string} [semester] - Filter by semester
+   * @query {string} [feeType] - Filter by fee type
+   * @query {boolean} [isMandatory] - Filter by mandatory status
+   * @returns {Object} Fee structures array and pagination info
+   * 
+   * @example
+   * GET /api/v1/finance/fee-structures?page=1&limit=20&programId=program123&feeType=tuition
+   */
   getAllFeeStructures = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -50,6 +78,16 @@ export class FinanceController {
     }
   };
 
+  /**
+   * Get Fee Structure By ID Endpoint Handler
+   * 
+   * Retrieves a specific fee structure by ID.
+   * 
+   * @route GET /api/v1/finance/fee-structures/:id
+   * @access Private
+   * @param {string} id - Fee structure ID
+   * @returns {FeeStructure} Fee structure object
+   */
   getFeeStructureById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -61,6 +99,26 @@ export class FinanceController {
     }
   };
 
+  /**
+   * Create Fee Structure Endpoint Handler
+   * 
+   * Creates a new fee structure.
+   * 
+   * @route POST /api/v1/finance/fee-structures
+   * @access Private (Requires finance.create permission)
+   * @body {CreateFeeStructureDTO} Fee structure creation data
+   * @returns {FeeStructure} Created fee structure
+   * 
+   * @example
+   * POST /api/v1/finance/fee-structures
+   * Body: {
+   *   programId: "program123",
+   *   semester: "2024-Fall",
+   *   feeType: "tuition",
+   *   amount: 50000,
+   *   description: "Tuition fee for Fall 2024"
+   * }
+   */
   createFeeStructure = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const feeStructureData: CreateFeeStructureDTO = {
@@ -86,6 +144,24 @@ export class FinanceController {
     }
   };
 
+  /**
+   * Update Fee Structure Endpoint Handler
+   * 
+   * Updates an existing fee structure.
+   * 
+   * @route PUT /api/v1/finance/fee-structures/:id
+   * @access Private (Requires finance.update permission)
+   * @param {string} id - Fee structure ID
+   * @body {UpdateFeeStructureDTO} Partial fee structure data to update
+   * @returns {FeeStructure} Updated fee structure
+   * 
+   * @example
+   * PUT /api/v1/finance/fee-structures/structure123
+   * Body: {
+   *   amount: 55000,
+   *   description: "Updated tuition fee"
+   * }
+   */
   updateFeeStructure = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -107,6 +183,23 @@ export class FinanceController {
 
   // ==================== Student Fees ====================
 
+  /**
+   * Get All Student Fees Endpoint Handler
+   * 
+   * Retrieves all student fees with pagination and optional filters.
+   * 
+   * @route GET /api/v1/finance/student-fees
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [studentId] - Filter by student ID
+   * @query {string} [semester] - Filter by semester
+   * @query {string} [paymentStatus] - Filter by payment status
+   * @returns {Object} Student fees array and pagination info
+   * 
+   * @example
+   * GET /api/v1/finance/student-fees?page=1&limit=20&studentId=student123&paymentStatus=pending
+   */
   getAllStudentFees = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -138,6 +231,16 @@ export class FinanceController {
     }
   };
 
+  /**
+   * Get Student Fee By ID Endpoint Handler
+   * 
+   * Retrieves a specific student fee by ID.
+   * 
+   * @route GET /api/v1/finance/student-fees/:id
+   * @access Private
+   * @param {string} id - Student fee ID
+   * @returns {StudentFee} Student fee object
+   */
   getStudentFeeById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -149,6 +252,20 @@ export class FinanceController {
     }
   };
 
+  /**
+   * Get Student Financial Summary Endpoint Handler
+   * 
+   * Retrieves comprehensive financial summary for a student.
+   * 
+   * @route GET /api/v1/finance/students/:studentId/summary
+   * @access Private
+   * @param {string} studentId - Student ID
+   * @query {string} semester - Semester identifier
+   * @returns {StudentFinancialSummary} Student financial summary
+   * 
+   * @example
+   * GET /api/v1/finance/students/student123/summary?semester=2024-Fall
+   */
   getStudentFinancialSummary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { studentId } = req.params;
@@ -168,6 +285,25 @@ export class FinanceController {
 
   // ==================== Payments ====================
 
+  /**
+   * Get All Payments Endpoint Handler
+   * 
+   * Retrieves all payments with pagination and optional filters.
+   * 
+   * @route GET /api/v1/finance/payments
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [studentId] - Filter by student ID
+   * @query {string} [studentFeeId] - Filter by student fee ID
+   * @query {string} [paymentMethod] - Filter by payment method
+   * @query {string} [startDate] - Filter by start date
+   * @query {string} [endDate] - Filter by end date
+   * @returns {Object} Payments array and pagination info
+   * 
+   * @example
+   * GET /api/v1/finance/payments?page=1&limit=20&studentId=student123&startDate=2024-09-01&endDate=2024-10-31
+   */
   getAllPayments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -201,6 +337,27 @@ export class FinanceController {
     }
   };
 
+  /**
+   * Create Payment Endpoint Handler
+   * 
+   * Creates a new payment record and updates the associated student fee.
+   * 
+   * @route POST /api/v1/finance/payments
+   * @access Private (Requires finance.create permission)
+   * @body {CreatePaymentDTO} Payment creation data
+   * @returns {Object} Created payment and updated fee
+   * 
+   * @example
+   * POST /api/v1/finance/payments
+   * Body: {
+   *   studentFeeId: "fee123",
+   *   studentId: "student456",
+   *   amount: 25000,
+   *   paymentDate: "2024-10-15",
+   *   paymentMethod: "bank_transfer",
+   *   transactionId: "TXN789"
+   * }
+   */
   createPayment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const paymentData: CreatePaymentDTO = {
@@ -227,6 +384,21 @@ export class FinanceController {
     }
   };
 
+  /**
+   * Get Financial Report Endpoint Handler
+   * 
+   * Generates a comprehensive financial report for a date range.
+   * 
+   * @route GET /api/v1/finance/reports
+   * @access Private (Requires finance.view permission)
+   * @query {string} startDate - Start date for the report (YYYY-MM-DD)
+   * @query {string} endDate - End date for the report (YYYY-MM-DD)
+   * @query {string} [semester] - Optional semester filter
+   * @returns {FinancialReport} Financial report
+   * 
+   * @example
+   * GET /api/v1/finance/reports?startDate=2024-09-01&endDate=2024-10-31&semester=2024-Fall
+   */
   getFinancialReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { startDate, endDate, semester } = req.query;
@@ -247,4 +419,3 @@ export class FinanceController {
     }
   };
 }
-

@@ -1,3 +1,22 @@
+/**
+ * Multi-Campus Service
+ * 
+ * Service for managing multiple campuses and transfers.
+ * Handles campus management, student transfers, and staff transfers:
+ * - Campus CRUD operations
+ * - Student transfer requests and approvals
+ * - Staff transfer requests and approvals
+ * - Campus reports and analytics
+ * 
+ * Features:
+ * - Campus code uniqueness validation
+ * - Transfer validation (same campus check, active campus check)
+ * - Transfer approval workflow
+ * - Campus analytics and reporting
+ * 
+ * @module services/multicampus.service
+ */
+
 import { MultiCampusRepository } from '@/repositories/multicampus.repository';
 import {
   Campus,
@@ -24,6 +43,26 @@ export class MultiCampusService {
 
   // ==================== Campuses ====================
 
+  /**
+   * Get all campuses with pagination and filters
+   * 
+   * Retrieves campuses with optional filtering by province, city, and active status.
+   * Returns paginated results.
+   * 
+   * @param {number} [limit=100] - Maximum number of campuses to return
+   * @param {number} [offset=0] - Number of campuses to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.province] - Filter by province
+   * @param {string} [filters.city] - Filter by city
+   * @param {boolean} [filters.isActive] - Filter by active status
+   * @returns {Promise<{campuses: Campus[], total: number}>} Campuses and total count
+   * 
+   * @example
+   * const { campuses, total } = await multiCampusService.getAllCampuses(50, 0, {
+   *   province: 'Punjab',
+   *   isActive: true
+   * });
+   */
   async getAllCampuses(
     limit: number = 100,
     offset: number = 0,
@@ -50,6 +89,15 @@ export class MultiCampusService {
     }
   }
 
+  /**
+   * Get campus by ID
+   * 
+   * Retrieves a specific campus by its ID.
+   * 
+   * @param {string} id - Campus ID
+   * @returns {Promise<Campus>} Campus object
+   * @throws {NotFoundError} If campus not found
+   */
   async getCampusById(id: string): Promise<Campus> {
     try {
       const campus = await this.multiCampusRepository.findCampusById(id);
@@ -66,6 +114,26 @@ export class MultiCampusService {
     }
   }
 
+  /**
+   * Create a campus
+   * 
+   * Creates a new campus with validation.
+   * Validates required fields and checks for duplicate campus codes.
+   * 
+   * @param {CreateCampusDTO} campusData - Campus creation data
+   * @returns {Promise<Campus>} Created campus
+   * @throws {ValidationError} If required fields are missing
+   * @throws {ConflictError} If campus code already exists
+   * 
+   * @example
+   * const campus = await multiCampusService.createCampus({
+   *   name: 'Main Campus',
+   *   code: 'MC',
+   *   address: '123 University Road',
+   *   city: 'Lahore',
+   *   province: 'Punjab'
+   * });
+   */
   async createCampus(campusData: CreateCampusDTO): Promise<Campus> {
     try {
       if (!campusData.name || !campusData.code || !campusData.address || !campusData.city || !campusData.province) {
@@ -89,6 +157,18 @@ export class MultiCampusService {
     }
   }
 
+  /**
+   * Update a campus
+   * 
+   * Updates an existing campus's information.
+   * Validates campus code uniqueness if code is being updated.
+   * 
+   * @param {string} id - Campus ID
+   * @param {UpdateCampusDTO} campusData - Partial campus data to update
+   * @returns {Promise<Campus>} Updated campus
+   * @throws {NotFoundError} If campus not found
+   * @throws {ConflictError} If campus code conflicts with existing campus
+   */
   async updateCampus(id: string, campusData: UpdateCampusDTO): Promise<Campus> {
     try {
       const existing = await this.multiCampusRepository.findCampusById(id);
@@ -119,6 +199,27 @@ export class MultiCampusService {
 
   // ==================== Student Transfers ====================
 
+  /**
+   * Get all student transfers with pagination and filters
+   * 
+   * Retrieves student transfers with optional filtering by student, campuses, and status.
+   * Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of transfers to return
+   * @param {number} [offset=0] - Number of transfers to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.studentId] - Filter by student ID
+   * @param {string} [filters.fromCampusId] - Filter by source campus ID
+   * @param {string} [filters.toCampusId] - Filter by destination campus ID
+   * @param {string} [filters.status] - Filter by transfer status
+   * @returns {Promise<{transfers: StudentTransfer[], total: number}>} Transfers and total count
+   * 
+   * @example
+   * const { transfers, total } = await multiCampusService.getAllStudentTransfers(20, 0, {
+   *   fromCampusId: 'campus123',
+   *   status: 'pending'
+   * });
+   */
   async getAllStudentTransfers(
     limit: number = 50,
     offset: number = 0,
@@ -146,6 +247,15 @@ export class MultiCampusService {
     }
   }
 
+  /**
+   * Get student transfer by ID
+   * 
+   * Retrieves a specific student transfer by its ID.
+   * 
+   * @param {string} id - Student transfer ID
+   * @returns {Promise<StudentTransfer>} Student transfer object
+   * @throws {NotFoundError} If transfer not found
+   */
   async getStudentTransferById(id: string): Promise<StudentTransfer> {
     try {
       const transfer = await this.multiCampusRepository.findStudentTransferById(id);
@@ -162,6 +272,26 @@ export class MultiCampusService {
     }
   }
 
+  /**
+   * Create a student transfer request
+   * 
+   * Creates a new student transfer request with validation.
+   * Validates required fields, campus existence, and active status.
+   * 
+   * @param {CreateStudentTransferDTO} transferData - Student transfer creation data
+   * @returns {Promise<StudentTransfer>} Created student transfer
+   * @throws {ValidationError} If required fields are missing or campuses are invalid
+   * @throws {NotFoundError} If campus not found
+   * 
+   * @example
+   * const transfer = await multiCampusService.createStudentTransfer({
+   *   studentId: 'student123',
+   *   fromCampusId: 'campus1',
+   *   toCampusId: 'campus2',
+   *   transferType: 'permanent',
+   *   reason: 'Family relocation'
+   * });
+   */
   async createStudentTransfer(transferData: CreateStudentTransferDTO): Promise<StudentTransfer> {
     try {
       if (!transferData.studentId || !transferData.fromCampusId || !transferData.toCampusId || !transferData.reason) {
@@ -194,6 +324,27 @@ export class MultiCampusService {
     }
   }
 
+  /**
+   * Approve or reject a student transfer
+   * 
+   * Approves or rejects a pending student transfer.
+   * Only pending transfers can be approved/rejected.
+   * Requires effective date for approval and rejection reason for rejection.
+   * 
+   * @param {string} id - Student transfer ID
+   * @param {ApproveTransferDTO} approveData - Approval/rejection data
+   * @param {string} [approvedBy] - ID of user approving/rejecting the transfer
+   * @returns {Promise<StudentTransfer>} Updated student transfer
+   * @throws {NotFoundError} If transfer not found
+   * @throws {ValidationError} If transfer is not pending or required fields are missing
+   * 
+   * @example
+   * const transfer = await multiCampusService.approveStudentTransfer('transfer123', {
+   *   status: 'approved',
+   *   effectiveDate: '2024-02-01',
+   *   remarks: 'Transfer approved'
+   * }, 'admin456');
+   */
   async approveStudentTransfer(id: string, approveData: ApproveTransferDTO, approvedBy?: string): Promise<StudentTransfer> {
     try {
       const transfer = await this.multiCampusRepository.findStudentTransferById(id);
@@ -235,6 +386,27 @@ export class MultiCampusService {
 
   // ==================== Staff Transfers ====================
 
+  /**
+   * Get all staff transfers with pagination and filters
+   * 
+   * Retrieves staff transfers with optional filtering by staff, campuses, and status.
+   * Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of transfers to return
+   * @param {number} [offset=0] - Number of transfers to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.staffId] - Filter by staff ID
+   * @param {string} [filters.fromCampusId] - Filter by source campus ID
+   * @param {string} [filters.toCampusId] - Filter by destination campus ID
+   * @param {string} [filters.status] - Filter by transfer status
+   * @returns {Promise<{transfers: StaffTransfer[], total: number}>} Transfers and total count
+   * 
+   * @example
+   * const { transfers, total } = await multiCampusService.getAllStaffTransfers(20, 0, {
+   *   fromCampusId: 'campus123',
+   *   status: 'pending'
+   * });
+   */
   async getAllStaffTransfers(
     limit: number = 50,
     offset: number = 0,
@@ -262,6 +434,15 @@ export class MultiCampusService {
     }
   }
 
+  /**
+   * Get staff transfer by ID
+   * 
+   * Retrieves a specific staff transfer by its ID.
+   * 
+   * @param {string} id - Staff transfer ID
+   * @returns {Promise<StaffTransfer>} Staff transfer object
+   * @throws {NotFoundError} If transfer not found
+   */
   async getStaffTransferById(id: string): Promise<StaffTransfer> {
     try {
       const transfer = await this.multiCampusRepository.findStaffTransferById(id);
@@ -278,6 +459,26 @@ export class MultiCampusService {
     }
   }
 
+  /**
+   * Create a staff transfer request
+   * 
+   * Creates a new staff transfer request with validation.
+   * Validates required fields, campus existence, and active status.
+   * 
+   * @param {CreateStaffTransferDTO} transferData - Staff transfer creation data
+   * @returns {Promise<StaffTransfer>} Created staff transfer
+   * @throws {ValidationError} If required fields are missing or campuses are invalid
+   * @throws {NotFoundError} If campus not found
+   * 
+   * @example
+   * const transfer = await multiCampusService.createStaffTransfer({
+   *   staffId: 'staff123',
+   *   fromCampusId: 'campus1',
+   *   toCampusId: 'campus2',
+   *   transferType: 'permanent',
+   *   reason: 'Organizational restructuring'
+   * });
+   */
   async createStaffTransfer(transferData: CreateStaffTransferDTO): Promise<StaffTransfer> {
     try {
       if (!transferData.staffId || !transferData.fromCampusId || !transferData.toCampusId || !transferData.reason) {
@@ -310,6 +511,27 @@ export class MultiCampusService {
     }
   }
 
+  /**
+   * Approve or reject a staff transfer
+   * 
+   * Approves or rejects a pending staff transfer.
+   * Only pending transfers can be approved/rejected.
+   * Requires effective date for approval and rejection reason for rejection.
+   * 
+   * @param {string} id - Staff transfer ID
+   * @param {ApproveTransferDTO} approveData - Approval/rejection data
+   * @param {string} [approvedBy] - ID of user approving/rejecting the transfer
+   * @returns {Promise<StaffTransfer>} Updated staff transfer
+   * @throws {NotFoundError} If transfer not found
+   * @throws {ValidationError} If transfer is not pending or required fields are missing
+   * 
+   * @example
+   * const transfer = await multiCampusService.approveStaffTransfer('transfer123', {
+   *   status: 'approved',
+   *   effectiveDate: '2024-02-01',
+   *   remarks: 'Transfer approved'
+   * }, 'admin456');
+   */
   async approveStaffTransfer(id: string, approveData: ApproveTransferDTO, approvedBy?: string): Promise<StaffTransfer> {
     try {
       const transfer = await this.multiCampusRepository.findStaffTransferById(id);
@@ -351,6 +573,22 @@ export class MultiCampusService {
 
   // ==================== Campus Reports ====================
 
+  /**
+   * Get campus report/analytics
+   * 
+   * Generates a comprehensive report for a specific campus.
+   * Includes student count, staff count, programs, courses, and enrollments.
+   * 
+   * @param {string} campusId - Campus ID
+   * @param {string} [reportPeriod] - Report period (YYYY-MM-DD), defaults to current date
+   * @returns {Promise<CampusReport>} Campus report with statistics
+   * @throws {NotFoundError} If campus not found
+   * 
+   * @example
+   * const report = await multiCampusService.getCampusReport('campus123', '2024-01-31');
+   * console.log(report.totalStudents); // 500
+   * console.log(report.totalStaff); // 50
+   */
   async getCampusReport(campusId: string, reportPeriod?: string): Promise<CampusReport> {
     try {
       const campus = await this.multiCampusRepository.findCampusById(campusId);
@@ -406,4 +644,3 @@ export class MultiCampusService {
     }
   }
 }
-

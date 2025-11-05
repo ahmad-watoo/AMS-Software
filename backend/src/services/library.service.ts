@@ -1,3 +1,21 @@
+/**
+ * Library Service
+ * 
+ * This service handles all library management business logic including:
+ * - Book catalog management (CRUD operations)
+ * - Book borrowing and return processing
+ * - Book renewal management
+ * - Book reservation system
+ * 
+ * The library system manages:
+ * - Book catalog with search and filtering
+ * - Borrowing workflow with due dates and fines
+ * - Renewal requests with reservation checks
+ * - Reservation queue management
+ * 
+ * @module services/library.service
+ */
+
 import { LibraryRepository } from '@/repositories/library.repository';
 import {
   Book,
@@ -22,6 +40,24 @@ export class LibraryService {
 
   // ==================== Books ====================
 
+  /**
+   * Get all books with pagination and filters
+   * 
+   * Retrieves books with optional filtering by title, author, ISBN,
+   * category, subject, and availability. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of books to return
+   * @param {number} [offset=0] - Number of books to skip
+   * @param {LibrarySearchFilters} [filters] - Optional filter criteria
+   * @returns {Promise<{books: Book[], total: number}>} Books and total count
+   * 
+   * @example
+   * const { books, total } = await libraryService.getAllBooks(20, 0, {
+   *   title: 'Data Structures',
+   *   category: 'Computer Science',
+   *   available: true
+   * });
+   */
   async getAllBooks(
     limit: number = 50,
     offset: number = 0,
@@ -44,6 +80,15 @@ export class LibraryService {
     }
   }
 
+  /**
+   * Get book by ID
+   * 
+   * Retrieves a specific book by its ID.
+   * 
+   * @param {string} id - Book ID
+   * @returns {Promise<Book>} Book object
+   * @throws {NotFoundError} If book not found
+   */
   async getBookById(id: string): Promise<Book> {
     try {
       const book = await this.libraryRepository.findBookById(id);
@@ -60,6 +105,24 @@ export class LibraryService {
     }
   }
 
+  /**
+   * Create a new book
+   * 
+   * Creates a new book entry in the library catalog with validation.
+   * 
+   * @param {CreateBookDTO} bookData - Book creation data
+   * @returns {Promise<Book>} Created book
+   * @throws {ValidationError} If book data is invalid
+   * 
+   * @example
+   * const book = await libraryService.createBook({
+   *   title: 'Introduction to Algorithms',
+   *   author: 'Thomas H. Cormen',
+   *   category: 'Computer Science',
+   *   language: 'English',
+   *   totalCopies: 10
+   * });
+   */
   async createBook(bookData: CreateBookDTO): Promise<Book> {
     try {
       if (!bookData.title || !bookData.author || !bookData.category || !bookData.language) {
@@ -80,6 +143,18 @@ export class LibraryService {
     }
   }
 
+  /**
+   * Update a book
+   * 
+   * Updates an existing book's information.
+   * Validates total copies cannot be less than borrowed copies.
+   * 
+   * @param {string} id - Book ID
+   * @param {UpdateBookDTO} bookData - Partial book data to update
+   * @returns {Promise<Book>} Updated book
+   * @throws {NotFoundError} If book not found
+   * @throws {ValidationError} If total copies is invalid
+   */
   async updateBook(id: string, bookData: UpdateBookDTO): Promise<Book> {
     try {
       const existingBook = await this.libraryRepository.findBookById(id);
@@ -103,6 +178,26 @@ export class LibraryService {
 
   // ==================== Borrowings ====================
 
+  /**
+   * Get all borrowings with pagination and filters
+   * 
+   * Retrieves book borrowings with optional filtering by user, book,
+   * and status. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of borrowings to return
+   * @param {number} [offset=0] - Number of borrowings to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.userId] - Filter by user ID
+   * @param {string} [filters.bookId] - Filter by book ID
+   * @param {string} [filters.status] - Filter by status
+   * @returns {Promise<{borrowings: BookBorrowing[], total: number}>} Borrowings and total count
+   * 
+   * @example
+   * const { borrowings, total } = await libraryService.getAllBorrowings(20, 0, {
+   *   userId: 'user123',
+   *   status: 'borrowed'
+   * });
+   */
   async getAllBorrowings(
     limit: number = 50,
     offset: number = 0,
@@ -129,6 +224,15 @@ export class LibraryService {
     }
   }
 
+  /**
+   * Get borrowing by ID
+   * 
+   * Retrieves a specific borrowing record by its ID.
+   * 
+   * @param {string} id - Borrowing record ID
+   * @returns {Promise<BookBorrowing>} Borrowing object
+   * @throws {NotFoundError} If borrowing not found
+   */
   async getBorrowingById(id: string): Promise<BookBorrowing> {
     try {
       const borrowing = await this.libraryRepository.findBorrowingById(id);
@@ -145,6 +249,25 @@ export class LibraryService {
     }
   }
 
+  /**
+   * Borrow a book
+   * 
+   * Creates a new borrowing record with validation.
+   * Checks for overdue books and borrowing limits.
+   * 
+   * @param {CreateBorrowingDTO} borrowingData - Borrowing creation data
+   * @returns {Promise<BookBorrowing>} Created borrowing record
+   * @throws {ValidationError} If borrowing data is invalid or limits are exceeded
+   * 
+   * @example
+   * const borrowing = await libraryService.borrowBook({
+   *   bookId: 'book123',
+   *   userId: 'user456',
+   *   userType: 'student',
+   *   borrowedDate: '2024-10-15',
+   *   dueDate: '2024-10-29'
+   * });
+   */
   async borrowBook(borrowingData: CreateBorrowingDTO): Promise<BookBorrowing> {
     try {
       if (!borrowingData.bookId || !borrowingData.userId || !borrowingData.borrowedDate || !borrowingData.dueDate) {
@@ -184,6 +307,16 @@ export class LibraryService {
     }
   }
 
+  /**
+   * Return a book
+   * 
+   * Marks a borrowed book as returned.
+   * 
+   * @param {string} id - Borrowing record ID
+   * @returns {Promise<BookBorrowing>} Updated borrowing record
+   * @throws {NotFoundError} If borrowing not found
+   * @throws {ValidationError} If book already returned
+   */
   async returnBook(id: string): Promise<BookBorrowing> {
     try {
       const borrowing = await this.libraryRepository.findBorrowingById(id);
@@ -206,6 +339,24 @@ export class LibraryService {
     }
   }
 
+  /**
+   * Renew a borrowing
+   * 
+   * Renews a book borrowing with a new due date.
+   * Checks for pending reservations before allowing renewal.
+   * 
+   * @param {string} id - Borrowing record ID
+   * @param {RenewBorrowingDTO} renewData - Renewal data with new due date
+   * @returns {Promise<BookBorrowing>} Updated borrowing record
+   * @throws {NotFoundError} If borrowing not found
+   * @throws {ValidationError} If renewal is not allowed
+   * 
+   * @example
+   * const borrowing = await libraryService.renewBorrowing('borrowing123', {
+   *   newDueDate: '2024-11-12',
+   *   remarks: 'Extended for additional research'
+   * });
+   */
   async renewBorrowing(id: string, renewData: RenewBorrowingDTO): Promise<BookBorrowing> {
     try {
       const borrowing = await this.libraryRepository.findBorrowingById(id);
@@ -239,6 +390,26 @@ export class LibraryService {
 
   // ==================== Reservations ====================
 
+  /**
+   * Get all reservations with pagination and filters
+   * 
+   * Retrieves book reservations with optional filtering by user, book,
+   * and status. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of reservations to return
+   * @param {number} [offset=0] - Number of reservations to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.userId] - Filter by user ID
+   * @param {string} [filters.bookId] - Filter by book ID
+   * @param {string} [filters.status] - Filter by status
+   * @returns {Promise<{reservations: BookReservation[], total: number}>} Reservations and total count
+   * 
+   * @example
+   * const { reservations, total } = await libraryService.getAllReservations(20, 0, {
+   *   bookId: 'book123',
+   *   status: 'pending'
+   * });
+   */
   async getAllReservations(
     limit: number = 50,
     offset: number = 0,
@@ -265,6 +436,26 @@ export class LibraryService {
     }
   }
 
+  /**
+   * Create a reservation
+   * 
+   * Creates a new book reservation with validation.
+   * Checks if book exists and prevents duplicate reservations.
+   * 
+   * @param {CreateReservationDTO} reservationData - Reservation creation data
+   * @returns {Promise<BookReservation>} Created reservation
+   * @throws {ValidationError} If reservation data is invalid
+   * @throws {NotFoundError} If book not found
+   * 
+   * @example
+   * const reservation = await libraryService.createReservation({
+   *   bookId: 'book123',
+   *   userId: 'user456',
+   *   userType: 'student',
+   *   reservationDate: '2024-10-15',
+   *   expiryDate: '2024-10-22'
+   * });
+   */
   async createReservation(reservationData: CreateReservationDTO): Promise<BookReservation> {
     try {
       if (!reservationData.bookId || !reservationData.userId || !reservationData.reservationDate || !reservationData.expiryDate) {
@@ -298,6 +489,15 @@ export class LibraryService {
     }
   }
 
+  /**
+   * Cancel a reservation
+   * 
+   * Cancels an existing book reservation.
+   * 
+   * @param {string} id - Reservation ID
+   * @returns {Promise<BookReservation>} Cancelled reservation
+   * @throws {Error} If cancellation fails
+   */
   async cancelReservation(id: string): Promise<BookReservation> {
     try {
       const reservation = await this.libraryRepository.findAllReservations(1, 0, { userId: '', bookId: '' });
@@ -309,4 +509,3 @@ export class LibraryService {
     }
   }
 }
-

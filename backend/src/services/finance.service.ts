@@ -1,3 +1,21 @@
+/**
+ * Finance Service
+ * 
+ * This service handles all finance management business logic including:
+ * - Fee structure management (creation, updates)
+ * - Student fee tracking and calculations
+ * - Payment processing and recording
+ * - Financial reporting and summaries
+ * 
+ * The finance system manages:
+ * - Fee structures for different programs and semesters
+ * - Student fee assignments and tracking
+ * - Payment processing with multiple payment methods
+ * - Financial summaries and reports
+ * 
+ * @module services/finance.service
+ */
+
 import { FinanceRepository } from '@/repositories/finance.repository';
 import {
   FeeStructure,
@@ -21,6 +39,28 @@ export class FinanceService {
 
   // ==================== Fee Structures ====================
 
+  /**
+   * Get all fee structures with pagination and filters
+   * 
+   * Retrieves fee structures with optional filtering by program, semester,
+   * fee type, and mandatory status. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of structures to return
+   * @param {number} [offset=0] - Number of structures to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.programId] - Filter by program ID
+   * @param {string} [filters.semester] - Filter by semester
+   * @param {string} [filters.feeType] - Filter by fee type
+   * @param {boolean} [filters.isMandatory] - Filter by mandatory status
+   * @returns {Promise<{feeStructures: FeeStructure[], total: number}>} Fee structures and total count
+   * 
+   * @example
+   * const { feeStructures, total } = await financeService.getAllFeeStructures(20, 0, {
+   *   programId: 'program123',
+   *   semester: '2024-Fall',
+   *   feeType: 'tuition'
+   * });
+   */
   async getAllFeeStructures(
     limit: number = 50,
     offset: number = 0,
@@ -48,6 +88,15 @@ export class FinanceService {
     }
   }
 
+  /**
+   * Get fee structure by ID
+   * 
+   * Retrieves a specific fee structure by its ID.
+   * 
+   * @param {string} id - Fee structure ID
+   * @returns {Promise<FeeStructure>} Fee structure object
+   * @throws {NotFoundError} If fee structure not found
+   */
   async getFeeStructureById(id: string): Promise<FeeStructure> {
     try {
       const structure = await this.financeRepository.findFeeStructureById(id);
@@ -64,6 +113,25 @@ export class FinanceService {
     }
   }
 
+  /**
+   * Create a new fee structure
+   * 
+   * Creates a new fee structure with validation.
+   * Validates required fields and amount.
+   * 
+   * @param {CreateFeeStructureDTO} feeStructureData - Fee structure creation data
+   * @returns {Promise<FeeStructure>} Created fee structure
+   * @throws {ValidationError} If fee structure data is invalid
+   * 
+   * @example
+   * const structure = await financeService.createFeeStructure({
+   *   programId: 'program123',
+   *   semester: '2024-Fall',
+   *   feeType: 'tuition',
+   *   amount: 50000,
+   *   description: 'Tuition fee for Fall 2024'
+   * });
+   */
   async createFeeStructure(feeStructureData: CreateFeeStructureDTO): Promise<FeeStructure> {
     try {
       if (!feeStructureData.semester || !feeStructureData.feeType || !feeStructureData.amount) {
@@ -84,6 +152,18 @@ export class FinanceService {
     }
   }
 
+  /**
+   * Update a fee structure
+   * 
+   * Updates an existing fee structure's information.
+   * Validates amount if being updated.
+   * 
+   * @param {string} id - Fee structure ID
+   * @param {UpdateFeeStructureDTO} feeStructureData - Partial fee structure data to update
+   * @returns {Promise<FeeStructure>} Updated fee structure
+   * @throws {NotFoundError} If fee structure not found
+   * @throws {ValidationError} If amount is invalid
+   */
   async updateFeeStructure(id: string, feeStructureData: UpdateFeeStructureDTO): Promise<FeeStructure> {
     try {
       const existingStructure = await this.financeRepository.findFeeStructureById(id);
@@ -107,6 +187,26 @@ export class FinanceService {
 
   // ==================== Student Fees ====================
 
+  /**
+   * Get all student fees with pagination and filters
+   * 
+   * Retrieves student fees with optional filtering by student, semester,
+   * and payment status. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of fees to return
+   * @param {number} [offset=0] - Number of fees to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.studentId] - Filter by student ID
+   * @param {string} [filters.semester] - Filter by semester
+   * @param {string} [filters.paymentStatus] - Filter by payment status
+   * @returns {Promise<{fees: StudentFee[], total: number}>} Student fees and total count
+   * 
+   * @example
+   * const { fees, total } = await financeService.getAllStudentFees(20, 0, {
+   *   studentId: 'student123',
+   *   paymentStatus: 'pending'
+   * });
+   */
   async getAllStudentFees(
     limit: number = 50,
     offset: number = 0,
@@ -133,6 +233,15 @@ export class FinanceService {
     }
   }
 
+  /**
+   * Get student fee by ID
+   * 
+   * Retrieves a specific student fee by its ID.
+   * 
+   * @param {string} id - Student fee ID
+   * @returns {Promise<StudentFee>} Student fee object
+   * @throws {NotFoundError} If student fee not found
+   */
   async getStudentFeeById(id: string): Promise<StudentFee> {
     try {
       const fee = await this.financeRepository.findStudentFeeById(id);
@@ -149,6 +258,21 @@ export class FinanceService {
     }
   }
 
+  /**
+   * Get student financial summary
+   * 
+   * Calculates comprehensive financial summary for a student in a specific semester.
+   * Includes total fees due, paid, balance, and payment status.
+   * 
+   * @param {string} studentId - Student ID
+   * @param {string} semester - Semester identifier
+   * @returns {Promise<StudentFinancialSummary>} Student financial summary
+   * 
+   * @example
+   * const summary = await financeService.getStudentFinancialSummary('student123', '2024-Fall');
+   * console.log(summary.balance); // 15000
+   * console.log(summary.paymentStatus); // 'partial'
+   */
   async getStudentFinancialSummary(
     studentId: string,
     semester: string
@@ -202,6 +326,29 @@ export class FinanceService {
 
   // ==================== Payments ====================
 
+  /**
+   * Get all payments with pagination and filters
+   * 
+   * Retrieves payments with optional filtering by student, fee, payment method,
+   * and date range. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of payments to return
+   * @param {number} [offset=0] - Number of payments to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.studentId] - Filter by student ID
+   * @param {string} [filters.studentFeeId] - Filter by student fee ID
+   * @param {string} [filters.paymentMethod] - Filter by payment method
+   * @param {string} [filters.startDate] - Filter by start date
+   * @param {string} [filters.endDate] - Filter by end date
+   * @returns {Promise<{payments: Payment[], total: number}>} Payments and total count
+   * 
+   * @example
+   * const { payments, total } = await financeService.getAllPayments(20, 0, {
+   *   studentId: 'student123',
+   *   startDate: '2024-09-01',
+   *   endDate: '2024-10-31'
+   * });
+   */
   async getAllPayments(
     limit: number = 50,
     offset: number = 0,
@@ -230,6 +377,28 @@ export class FinanceService {
     }
   }
 
+  /**
+   * Create a payment
+   * 
+   * Creates a new payment record and updates the associated student fee.
+   * Validates payment amount doesn't exceed remaining balance.
+   * 
+   * @param {CreatePaymentDTO} paymentData - Payment creation data
+   * @param {string} [receivedBy] - ID of user receiving the payment
+   * @returns {Promise<{payment: Payment, updatedFee: StudentFee}>} Created payment and updated fee
+   * @throws {ValidationError} If payment data is invalid
+   * @throws {NotFoundError} If student fee not found
+   * 
+   * @example
+   * const { payment, updatedFee } = await financeService.createPayment({
+   *   studentFeeId: 'fee123',
+   *   studentId: 'student456',
+   *   amount: 25000,
+   *   paymentDate: '2024-10-15',
+   *   paymentMethod: 'bank_transfer',
+   *   transactionId: 'TXN789'
+   * }, 'faculty123');
+   */
   async createPayment(paymentData: CreatePaymentDTO, receivedBy?: string): Promise<{ payment: Payment; updatedFee: StudentFee }> {
     try {
       // Validate payment data
@@ -272,6 +441,26 @@ export class FinanceService {
     }
   }
 
+  /**
+   * Get financial report
+   * 
+   * Generates a comprehensive financial report for a date range.
+   * Includes total fees due, paid, pending, overdue, and payment method breakdown.
+   * 
+   * @param {string} startDate - Start date for the report (YYYY-MM-DD)
+   * @param {string} endDate - End date for the report (YYYY-MM-DD)
+   * @param {string} [semester] - Optional semester filter
+   * @returns {Promise<FinancialReport>} Financial report
+   * 
+   * @example
+   * const report = await financeService.getFinancialReport(
+   *   '2024-09-01',
+   *   '2024-10-31',
+   *   '2024-Fall'
+   * );
+   * console.log(report.totalFeesPaid); // 5000000
+   * console.log(report.totalPending); // 500000
+   */
   async getFinancialReport(
     startDate: string,
     endDate: string,
@@ -327,4 +516,3 @@ export class FinanceService {
     }
   }
 }
-

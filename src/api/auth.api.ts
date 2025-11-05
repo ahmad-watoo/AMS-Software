@@ -1,5 +1,19 @@
+/**
+ * Authentication API Client
+ * 
+ * Frontend API client for authentication endpoints.
+ * Provides typed functions for all authentication operations.
+ * 
+ * @module api/auth.api
+ */
+
 import apiClient from './client';
 
+/**
+ * User Registration Data Transfer Object
+ * 
+ * @interface RegisterDTO
+ */
 export interface RegisterDTO {
   email: string;
   password: string;
@@ -11,11 +25,21 @@ export interface RegisterDTO {
   gender?: 'male' | 'female' | 'other';
 }
 
+/**
+ * User Login Data Transfer Object
+ * 
+ * @interface LoginDTO
+ */
 export interface LoginDTO {
   email: string;
   password: string;
 }
 
+/**
+ * User Interface
+ * 
+ * @interface User
+ */
 export interface User {
   id: string;
   email: string;
@@ -27,6 +51,13 @@ export interface User {
   isVerified: boolean;
 }
 
+/**
+ * Authentication Response
+ * 
+ * Returned after successful login or registration.
+ * 
+ * @interface AuthResponse
+ */
 export interface AuthResponse {
   user: User;
   accessToken: string;
@@ -34,6 +65,12 @@ export interface AuthResponse {
   expiresIn: number;
 }
 
+/**
+ * Standard API Response Wrapper
+ * 
+ * @interface ApiResponse
+ * @template T - Type of the data being returned
+ */
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -45,9 +82,29 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+/**
+ * Authentication API Client
+ * 
+ * Provides methods for all authentication operations.
+ */
 export const authAPI = {
   /**
    * Register a new user
+   * 
+   * Creates a new user account and returns authentication tokens.
+   * 
+   * @param {RegisterDTO} data - User registration data
+   * @returns {Promise<AuthResponse>} User data with access and refresh tokens
+   * @throws {Error} If registration fails
+   * 
+   * @example
+   * const response = await authAPI.register({
+   *   email: 'user@example.com',
+   *   password: 'SecurePass123!',
+   *   firstName: 'John',
+   *   lastName: 'Doe'
+   * });
+   * localStorage.setItem('accessToken', response.accessToken);
    */
   register: async (data: RegisterDTO): Promise<AuthResponse> => {
     const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data);
@@ -59,6 +116,19 @@ export const authAPI = {
 
   /**
    * Login user
+   * 
+   * Authenticates user with email and password, returns tokens.
+   * 
+   * @param {LoginDTO} data - Login credentials
+   * @returns {Promise<AuthResponse>} User data with access and refresh tokens
+   * @throws {Error} If login fails
+   * 
+   * @example
+   * const response = await authAPI.login({
+   *   email: 'user@example.com',
+   *   password: 'SecurePass123!'
+   * });
+   * localStorage.setItem('accessToken', response.accessToken);
    */
   login: async (data: LoginDTO): Promise<AuthResponse> => {
     const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data);
@@ -70,6 +140,16 @@ export const authAPI = {
 
   /**
    * Refresh access token
+   * 
+   * Obtains a new access token using a refresh token.
+   * 
+   * @param {string} refreshToken - Refresh token
+   * @returns {Promise<{accessToken: string, expiresIn: number}>} New access token and expiration
+   * @throws {Error} If token refresh fails
+   * 
+   * @example
+   * const { accessToken } = await authAPI.refreshToken(refreshToken);
+   * localStorage.setItem('accessToken', accessToken);
    */
   refreshToken: async (refreshToken: string): Promise<{ accessToken: string; expiresIn: number }> => {
     const response = await apiClient.post<ApiResponse<{ accessToken: string; expiresIn: number }>>(
@@ -84,6 +164,15 @@ export const authAPI = {
 
   /**
    * Logout user
+   * 
+   * Logs out the current user (client should remove tokens from storage).
+   * 
+   * @returns {Promise<void>}
+   * 
+   * @example
+   * await authAPI.logout();
+   * localStorage.removeItem('accessToken');
+   * localStorage.removeItem('refreshToken');
    */
   logout: async (): Promise<void> => {
     await apiClient.post('/auth/logout');
@@ -91,6 +180,15 @@ export const authAPI = {
 
   /**
    * Get current user profile
+   * 
+   * Retrieves the profile of the currently authenticated user.
+   * 
+   * @returns {Promise<User>} Current user's profile
+   * @throws {Error} If request fails or user is not authenticated
+   * 
+   * @example
+   * const user = await authAPI.getProfile();
+   * console.log(user.email); // 'user@example.com'
    */
   getProfile: async (): Promise<User> => {
     const response = await apiClient.get<ApiResponse<User>>('/auth/profile');
@@ -100,4 +198,3 @@ export const authAPI = {
     return response.data.data;
   },
 };
-

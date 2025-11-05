@@ -1,3 +1,13 @@
+/**
+ * Multi-Campus Controller
+ * 
+ * Handles HTTP requests for multi-campus management endpoints.
+ * Manages campuses, student transfers, staff transfers, and campus reports.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/multicampus.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { MultiCampusService } from '@/services/multicampus.service';
 import {
@@ -20,6 +30,23 @@ export class MultiCampusController {
 
   // ==================== Campuses ====================
 
+  /**
+   * Get All Campuses Endpoint Handler
+   * 
+   * Retrieves all campuses with pagination and optional filters.
+   * 
+   * @route GET /api/v1/multicampus/campuses
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=100] - Items per page
+   * @query {string} [province] - Filter by province
+   * @query {string} [city] - Filter by city
+   * @query {boolean} [isActive] - Filter by active status
+   * @returns {Object} Campuses array and pagination info
+   * 
+   * @example
+   * GET /api/v1/multicampus/campuses?page=1&limit=50&province=Punjab&isActive=true
+   */
   getAllCampuses = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -51,6 +78,16 @@ export class MultiCampusController {
     }
   };
 
+  /**
+   * Get Campus By ID Endpoint Handler
+   * 
+   * Retrieves a specific campus by ID.
+   * 
+   * @route GET /api/v1/multicampus/campuses/:id
+   * @access Private
+   * @param {string} id - Campus ID
+   * @returns {Campus} Campus object
+   */
   getCampusById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -62,6 +99,26 @@ export class MultiCampusController {
     }
   };
 
+  /**
+   * Create Campus Endpoint Handler
+   * 
+   * Creates a new campus.
+   * 
+   * @route POST /api/v1/multicampus/campuses
+   * @access Private (Requires admin.create permission)
+   * @body {CreateCampusDTO} Campus creation data
+   * @returns {Campus} Created campus
+   * 
+   * @example
+   * POST /api/v1/multicampus/campuses
+   * Body: {
+   *   name: "Main Campus",
+   *   code: "MC",
+   *   address: "123 University Road",
+   *   city: "Lahore",
+   *   province: "Punjab"
+   * }
+   */
   createCampus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const campusData: CreateCampusDTO = {
@@ -92,6 +149,24 @@ export class MultiCampusController {
     }
   };
 
+  /**
+   * Update Campus Endpoint Handler
+   * 
+   * Updates an existing campus.
+   * 
+   * @route PUT /api/v1/multicampus/campuses/:id
+   * @access Private (Requires admin.update permission)
+   * @param {string} id - Campus ID
+   * @body {UpdateCampusDTO} Partial campus data to update
+   * @returns {Campus} Updated campus
+   * 
+   * @example
+   * PUT /api/v1/multicampus/campuses/campus123
+   * Body: {
+   *   name: "Updated Campus Name",
+   *   isActive: false
+   * }
+   */
   updateCampus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -121,6 +196,24 @@ export class MultiCampusController {
 
   // ==================== Student Transfers ====================
 
+  /**
+   * Get All Student Transfers Endpoint Handler
+   * 
+   * Retrieves all student transfers with pagination and optional filters.
+   * 
+   * @route GET /api/v1/multicampus/student-transfers
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [studentId] - Filter by student ID
+   * @query {string} [fromCampusId] - Filter by source campus ID
+   * @query {string} [toCampusId] - Filter by destination campus ID
+   * @query {string} [status] - Filter by transfer status
+   * @returns {Object} Student transfers array and pagination info
+   * 
+   * @example
+   * GET /api/v1/multicampus/student-transfers?page=1&limit=20&fromCampusId=campus123&status=pending
+   */
   getAllStudentTransfers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -153,6 +246,16 @@ export class MultiCampusController {
     }
   };
 
+  /**
+   * Get Student Transfer By ID Endpoint Handler
+   * 
+   * Retrieves a specific student transfer by ID.
+   * 
+   * @route GET /api/v1/multicampus/student-transfers/:id
+   * @access Private
+   * @param {string} id - Student transfer ID
+   * @returns {StudentTransfer} Student transfer object
+   */
   getStudentTransferById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -164,6 +267,26 @@ export class MultiCampusController {
     }
   };
 
+  /**
+   * Create Student Transfer Endpoint Handler
+   * 
+   * Creates a new student transfer request.
+   * 
+   * @route POST /api/v1/multicampus/student-transfers
+   * @access Private
+   * @body {CreateStudentTransferDTO} Student transfer creation data
+   * @returns {StudentTransfer} Created student transfer
+   * 
+   * @example
+   * POST /api/v1/multicampus/student-transfers
+   * Body: {
+   *   studentId: "student123",
+   *   fromCampusId: "campus1",
+   *   toCampusId: "campus2",
+   *   transferType: "permanent",
+   *   reason: "Family relocation"
+   * }
+   */
   createStudentTransfer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const transferData: CreateStudentTransferDTO = {
@@ -188,6 +311,25 @@ export class MultiCampusController {
     }
   };
 
+  /**
+   * Approve Student Transfer Endpoint Handler
+   * 
+   * Approves or rejects a student transfer request.
+   * 
+   * @route POST /api/v1/multicampus/student-transfers/:id/approve
+   * @access Private (Requires admin.approve permission)
+   * @param {string} id - Student transfer ID
+   * @body {ApproveTransferDTO} Approval/rejection data
+   * @returns {StudentTransfer} Updated student transfer
+   * 
+   * @example
+   * POST /api/v1/multicampus/student-transfers/transfer123/approve
+   * Body: {
+   *   status: "approved",
+   *   effectiveDate: "2024-02-01",
+   *   remarks: "Transfer approved"
+   * }
+   */
   approveStudentTransfer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -214,6 +356,24 @@ export class MultiCampusController {
 
   // ==================== Staff Transfers ====================
 
+  /**
+   * Get All Staff Transfers Endpoint Handler
+   * 
+   * Retrieves all staff transfers with pagination and optional filters.
+   * 
+   * @route GET /api/v1/multicampus/staff-transfers
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [staffId] - Filter by staff ID
+   * @query {string} [fromCampusId] - Filter by source campus ID
+   * @query {string} [toCampusId] - Filter by destination campus ID
+   * @query {string} [status] - Filter by transfer status
+   * @returns {Object} Staff transfers array and pagination info
+   * 
+   * @example
+   * GET /api/v1/multicampus/staff-transfers?page=1&limit=20&fromCampusId=campus123&status=pending
+   */
   getAllStaffTransfers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -246,6 +406,16 @@ export class MultiCampusController {
     }
   };
 
+  /**
+   * Get Staff Transfer By ID Endpoint Handler
+   * 
+   * Retrieves a specific staff transfer by ID.
+   * 
+   * @route GET /api/v1/multicampus/staff-transfers/:id
+   * @access Private
+   * @param {string} id - Staff transfer ID
+   * @returns {StaffTransfer} Staff transfer object
+   */
   getStaffTransferById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -257,6 +427,26 @@ export class MultiCampusController {
     }
   };
 
+  /**
+   * Create Staff Transfer Endpoint Handler
+   * 
+   * Creates a new staff transfer request.
+   * 
+   * @route POST /api/v1/multicampus/staff-transfers
+   * @access Private
+   * @body {CreateStaffTransferDTO} Staff transfer creation data
+   * @returns {StaffTransfer} Created staff transfer
+   * 
+   * @example
+   * POST /api/v1/multicampus/staff-transfers
+   * Body: {
+   *   staffId: "staff123",
+   *   fromCampusId: "campus1",
+   *   toCampusId: "campus2",
+   *   transferType: "permanent",
+   *   reason: "Organizational restructuring"
+   * }
+   */
   createStaffTransfer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const transferData: CreateStaffTransferDTO = {
@@ -281,6 +471,25 @@ export class MultiCampusController {
     }
   };
 
+  /**
+   * Approve Staff Transfer Endpoint Handler
+   * 
+   * Approves or rejects a staff transfer request.
+   * 
+   * @route POST /api/v1/multicampus/staff-transfers/:id/approve
+   * @access Private (Requires admin.approve permission)
+   * @param {string} id - Staff transfer ID
+   * @body {ApproveTransferDTO} Approval/rejection data
+   * @returns {StaffTransfer} Updated staff transfer
+   * 
+   * @example
+   * POST /api/v1/multicampus/staff-transfers/transfer123/approve
+   * Body: {
+   *   status: "approved",
+   *   effectiveDate: "2024-02-01",
+   *   remarks: "Transfer approved"
+   * }
+   */
   approveStaffTransfer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -307,6 +516,20 @@ export class MultiCampusController {
 
   // ==================== Campus Reports ====================
 
+  /**
+   * Get Campus Report Endpoint Handler
+   * 
+   * Generates a comprehensive report for a specific campus.
+   * 
+   * @route GET /api/v1/multicampus/campuses/:campusId/report
+   * @access Private
+   * @param {string} campusId - Campus ID
+   * @query {string} [reportPeriod] - Report period (YYYY-MM-DD)
+   * @returns {CampusReport} Campus report with statistics
+   * 
+   * @example
+   * GET /api/v1/multicampus/campuses/campus123/report?reportPeriod=2024-01-31
+   */
   getCampusReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { campusId } = req.params;
@@ -320,4 +543,3 @@ export class MultiCampusController {
     }
   };
 }
-

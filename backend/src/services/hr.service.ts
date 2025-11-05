@@ -1,3 +1,23 @@
+/**
+ * HR Service
+ * 
+ * This service handles all Human Resources management business logic including:
+ * - Employee management (CRUD operations)
+ * - Leave request processing and approval
+ * - Leave balance tracking
+ * - Job posting management
+ * - Job application processing
+ * 
+ * The HR system manages:
+ * - Employee records with department and designation
+ * - Leave request workflow (application, approval, rejection)
+ * - Leave balance calculations by type
+ * - Job postings and recruitment
+ * - Job application submissions
+ * 
+ * @module services/hr.service
+ */
+
 import { HRRepository } from '@/repositories/hr.repository';
 import {
   Employee,
@@ -24,6 +44,28 @@ export class HRService {
 
   // ==================== Employees ====================
 
+  /**
+   * Get all employees with pagination and filters
+   * 
+   * Retrieves employees with optional filtering by department, designation,
+   * employment type, and active status. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of employees to return
+   * @param {number} [offset=0] - Number of employees to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.departmentId] - Filter by department ID
+   * @param {string} [filters.designation] - Filter by designation
+   * @param {string} [filters.employmentType] - Filter by employment type
+   * @param {boolean} [filters.isActive] - Filter by active status
+   * @returns {Promise<{employees: Employee[], total: number}>} Employees and total count
+   * 
+   * @example
+   * const { employees, total } = await hrService.getAllEmployees(20, 0, {
+   *   departmentId: 'dept123',
+   *   employmentType: 'permanent',
+   *   isActive: true
+   * });
+   */
   async getAllEmployees(
     limit: number = 50,
     offset: number = 0,
@@ -51,6 +93,15 @@ export class HRService {
     }
   }
 
+  /**
+   * Get employee by ID
+   * 
+   * Retrieves a specific employee by their ID.
+   * 
+   * @param {string} id - Employee ID
+   * @returns {Promise<Employee>} Employee object
+   * @throws {NotFoundError} If employee not found
+   */
   async getEmployeeById(id: string): Promise<Employee> {
     try {
       const employee = await this.hrRepository.findEmployeeById(id);
@@ -67,6 +118,26 @@ export class HRService {
     }
   }
 
+  /**
+   * Create a new employee
+   * 
+   * Creates a new employee record with validation.
+   * Checks for duplicate employee IDs.
+   * 
+   * @param {CreateEmployeeDTO} employeeData - Employee creation data
+   * @returns {Promise<Employee>} Created employee
+   * @throws {ValidationError} If employee data is invalid
+   * @throws {ConflictError} If employee ID already exists
+   * 
+   * @example
+   * const employee = await hrService.createEmployee({
+   *   userId: 'user123',
+   *   employeeId: 'EMP001',
+   *   designation: 'Assistant Professor',
+   *   joiningDate: '2024-01-15',
+   *   employmentType: 'permanent'
+   * });
+   */
   async createEmployee(employeeData: CreateEmployeeDTO): Promise<Employee> {
     try {
       if (!employeeData.userId || !employeeData.employeeId || !employeeData.designation || !employeeData.joiningDate) {
@@ -89,6 +160,16 @@ export class HRService {
     }
   }
 
+  /**
+   * Update an employee
+   * 
+   * Updates an existing employee's information.
+   * 
+   * @param {string} id - Employee ID
+   * @param {UpdateEmployeeDTO} employeeData - Partial employee data to update
+   * @returns {Promise<Employee>} Updated employee
+   * @throws {NotFoundError} If employee not found
+   */
   async updateEmployee(id: string, employeeData: UpdateEmployeeDTO): Promise<Employee> {
     try {
       const existingEmployee = await this.hrRepository.findEmployeeById(id);
@@ -108,6 +189,26 @@ export class HRService {
 
   // ==================== Leave Requests ====================
 
+  /**
+   * Get all leave requests with pagination and filters
+   * 
+   * Retrieves leave requests with optional filtering by employee, status,
+   * and leave type. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of requests to return
+   * @param {number} [offset=0] - Number of requests to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.employeeId] - Filter by employee ID
+   * @param {string} [filters.status] - Filter by status
+   * @param {string} [filters.leaveType] - Filter by leave type
+   * @returns {Promise<{leaveRequests: LeaveRequest[], total: number}>} Leave requests and total count
+   * 
+   * @example
+   * const { leaveRequests, total } = await hrService.getAllLeaveRequests(20, 0, {
+   *   employeeId: 'employee123',
+   *   status: 'pending'
+   * });
+   */
   async getAllLeaveRequests(
     limit: number = 50,
     offset: number = 0,
@@ -134,6 +235,15 @@ export class HRService {
     }
   }
 
+  /**
+   * Get leave request by ID
+   * 
+   * Retrieves a specific leave request by its ID.
+   * 
+   * @param {string} id - Leave request ID
+   * @returns {Promise<LeaveRequest>} Leave request object
+   * @throws {NotFoundError} If leave request not found
+   */
   async getLeaveRequestById(id: string): Promise<LeaveRequest> {
     try {
       const request = await this.hrRepository.findLeaveRequestById(id);
@@ -150,6 +260,25 @@ export class HRService {
     }
   }
 
+  /**
+   * Create a leave request
+   * 
+   * Creates a new leave request with validation.
+   * Validates dates and ensures start date is not in the past.
+   * 
+   * @param {CreateLeaveRequestDTO} leaveData - Leave request creation data
+   * @returns {Promise<LeaveRequest>} Created leave request
+   * @throws {ValidationError} If leave data is invalid
+   * 
+   * @example
+   * const leaveRequest = await hrService.createLeaveRequest({
+   *   employeeId: 'employee123',
+   *   leaveType: 'annual',
+   *   startDate: '2024-11-01',
+   *   endDate: '2024-11-05',
+   *   reason: 'Family vacation'
+   * });
+   */
   async createLeaveRequest(leaveData: CreateLeaveRequestDTO): Promise<LeaveRequest> {
     try {
       if (!leaveData.employeeId || !leaveData.leaveType || !leaveData.startDate || !leaveData.endDate) {
@@ -182,6 +311,25 @@ export class HRService {
     }
   }
 
+  /**
+   * Approve or reject a leave request
+   * 
+   * Processes a leave request approval or rejection.
+   * Only pending requests can be processed.
+   * 
+   * @param {string} id - Leave request ID
+   * @param {ApproveLeaveDTO} approveData - Approval/rejection data
+   * @param {string} [approvedBy] - ID of user approving/rejecting
+   * @returns {Promise<LeaveRequest>} Updated leave request
+   * @throws {NotFoundError} If leave request not found
+   * @throws {ValidationError} If request is not pending
+   * 
+   * @example
+   * const leaveRequest = await hrService.approveLeaveRequest('request123', {
+   *   status: 'approved',
+   *   remarks: 'Approved for annual leave'
+   * }, 'manager456');
+   */
   async approveLeaveRequest(id: string, approveData: ApproveLeaveDTO, approvedBy?: string): Promise<LeaveRequest> {
     try {
       const request = await this.hrRepository.findLeaveRequestById(id);
@@ -209,6 +357,20 @@ export class HRService {
     }
   }
 
+  /**
+   * Get leave balance for an employee
+   * 
+   * Calculates leave balance for an employee by type.
+   * Includes used and remaining leaves for annual, sick, and casual leave.
+   * 
+   * @param {string} employeeId - Employee ID
+   * @returns {Promise<LeaveBalance>} Leave balance with used and remaining leaves
+   * 
+   * @example
+   * const balance = await hrService.getLeaveBalance('employee123');
+   * console.log(balance.remainingAnnualLeave); // 10
+   * console.log(balance.usedSickLeave); // 3
+   */
   async getLeaveBalance(employeeId: string): Promise<LeaveBalance> {
     try {
       // Get all approved leave requests
@@ -255,6 +417,26 @@ export class HRService {
 
   // ==================== Job Postings ====================
 
+  /**
+   * Get all job postings with pagination and filters
+   * 
+   * Retrieves job postings with optional filtering by department, status,
+   * and employment type. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of postings to return
+   * @param {number} [offset=0] - Number of postings to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.departmentId] - Filter by department ID
+   * @param {string} [filters.status] - Filter by status
+   * @param {string} [filters.employmentType] - Filter by employment type
+   * @returns {Promise<{jobPostings: JobPosting[], total: number}>} Job postings and total count
+   * 
+   * @example
+   * const { jobPostings, total } = await hrService.getAllJobPostings(20, 0, {
+   *   departmentId: 'dept123',
+   *   status: 'published'
+   * });
+   */
   async getAllJobPostings(
     limit: number = 50,
     offset: number = 0,
@@ -281,6 +463,15 @@ export class HRService {
     }
   }
 
+  /**
+   * Get job posting by ID
+   * 
+   * Retrieves a specific job posting by its ID.
+   * 
+   * @param {string} id - Job posting ID
+   * @returns {Promise<JobPosting>} Job posting object
+   * @throws {NotFoundError} If job posting not found
+   */
   async getJobPostingById(id: string): Promise<JobPosting> {
     try {
       const posting = await this.hrRepository.findJobPostingById(id);
@@ -297,6 +488,26 @@ export class HRService {
     }
   }
 
+  /**
+   * Create a job posting
+   * 
+   * Creates a new job posting with validation.
+   * Validates deadline is in the future.
+   * 
+   * @param {CreateJobPostingDTO} jobData - Job posting creation data
+   * @param {string} [createdBy] - ID of user creating the posting
+   * @returns {Promise<JobPosting>} Created job posting
+   * @throws {ValidationError} If job data is invalid
+   * 
+   * @example
+   * const jobPosting = await hrService.createJobPosting({
+   *   title: 'Assistant Professor - Computer Science',
+   *   departmentId: 'dept123',
+   *   description: 'Teaching and research position',
+   *   deadline: '2024-12-31',
+   *   employmentType: 'permanent'
+   * }, 'hr123');
+   */
   async createJobPosting(jobData: CreateJobPostingDTO, createdBy?: string): Promise<JobPosting> {
     try {
       if (!jobData.title || !jobData.description || !jobData.deadline) {
@@ -321,6 +532,25 @@ export class HRService {
 
   // ==================== Job Applications ====================
 
+  /**
+   * Get all job applications with pagination and filters
+   * 
+   * Retrieves job applications with optional filtering by job posting and status.
+   * Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of applications to return
+   * @param {number} [offset=0] - Number of applications to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.jobPostingId] - Filter by job posting ID
+   * @param {string} [filters.status] - Filter by status
+   * @returns {Promise<{applications: JobApplication[], total: number}>} Applications and total count
+   * 
+   * @example
+   * const { applications, total } = await hrService.getAllJobApplications(20, 0, {
+   *   jobPostingId: 'posting123',
+   *   status: 'pending'
+   * });
+   */
   async getAllJobApplications(
     limit: number = 50,
     offset: number = 0,
@@ -346,6 +576,26 @@ export class HRService {
     }
   }
 
+  /**
+   * Create a job application
+   * 
+   * Creates a new job application with validation.
+   * Validates CNIC format, checks job posting exists and is accepting applications.
+   * 
+   * @param {CreateJobApplicationDTO} applicationData - Job application creation data
+   * @returns {Promise<JobApplication>} Created job application
+   * @throws {ValidationError} If application data is invalid
+   * @throws {NotFoundError} If job posting not found
+   * 
+   * @example
+   * const application = await hrService.createJobApplication({
+   *   jobPostingId: 'posting123',
+   *   applicantName: 'John Doe',
+   *   applicantEmail: 'john@example.com',
+   *   applicantCNIC: '12345-1234567-1',
+   *   resumeUrl: 'https://example.com/resume.pdf'
+   * });
+   */
   async createJobApplication(applicationData: CreateJobApplicationDTO): Promise<JobApplication> {
     try {
       if (!applicationData.jobPostingId || !applicationData.applicantName || !applicationData.applicantEmail || !applicationData.applicantCNIC) {
@@ -384,4 +634,3 @@ export class HRService {
     }
   }
 }
-

@@ -1,3 +1,13 @@
+/**
+ * Examination Controller
+ * 
+ * Handles HTTP requests for examination management endpoints.
+ * Manages exams, results, and re-evaluation requests.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/examination.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { ExaminationService } from '@/services/examination.service';
 import {
@@ -20,6 +30,24 @@ export class ExaminationController {
 
   // ==================== Exams ====================
 
+  /**
+   * Get All Exams Endpoint Handler
+   * 
+   * Retrieves all exams with pagination and optional filters.
+   * 
+   * @route GET /api/v1/examination/exams
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [sectionId] - Filter by section ID
+   * @query {string} [examType] - Filter by exam type
+   * @query {string} [semester] - Filter by semester
+   * @query {string} [examDate] - Filter by exam date
+   * @returns {Object} Exams array and pagination info
+   * 
+   * @example
+   * GET /api/v1/examination/exams?page=1&limit=20&sectionId=section123&examType=midterm
+   */
   getAllExams = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -52,6 +80,16 @@ export class ExaminationController {
     }
   };
 
+  /**
+   * Get Exam By ID Endpoint Handler
+   * 
+   * Retrieves a specific exam by ID.
+   * 
+   * @route GET /api/v1/examination/exams/:id
+   * @access Private
+   * @param {string} id - Exam ID
+   * @returns {Exam} Exam object
+   */
   getExamById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -63,6 +101,30 @@ export class ExaminationController {
     }
   };
 
+  /**
+   * Create Exam Endpoint Handler
+   * 
+   * Creates a new exam.
+   * 
+   * @route POST /api/v1/examination/exams
+   * @access Private (Requires examination.create permission)
+   * @body {CreateExamDTO} Exam creation data
+   * @returns {Exam} Created exam
+   * 
+   * @example
+   * POST /api/v1/examination/exams
+   * Body: {
+   *   sectionId: "section123",
+   *   examType: "midterm",
+   *   title: "Midterm Exam - Data Structures",
+   *   examDate: "2024-10-15",
+   *   startTime: "09:00",
+   *   endTime: "11:00",
+   *   totalMarks: 100,
+   *   passingMarks: 50,
+   *   semester: "2024-Fall"
+   * }
+   */
   createExam = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const examData: CreateExamDTO = {
@@ -92,6 +154,25 @@ export class ExaminationController {
     }
   };
 
+  /**
+   * Update Exam Endpoint Handler
+   * 
+   * Updates an existing exam.
+   * 
+   * @route PUT /api/v1/examination/exams/:id
+   * @access Private (Requires examination.update permission)
+   * @param {string} id - Exam ID
+   * @body {UpdateExamDTO} Partial exam data to update
+   * @returns {Exam} Updated exam
+   * 
+   * @example
+   * PUT /api/v1/examination/exams/exam123
+   * Body: {
+   *   title: "Updated Exam Title",
+   *   totalMarks: 120,
+   *   passingMarks: 60
+   * }
+   */
   updateExam = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -117,6 +198,24 @@ export class ExaminationController {
 
   // ==================== Results ====================
 
+  /**
+   * Get All Results Endpoint Handler
+   * 
+   * Retrieves all results with pagination and optional filters.
+   * 
+   * @route GET /api/v1/examination/results
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [examId] - Filter by exam ID
+   * @query {string} [studentId] - Filter by student ID
+   * @query {string} [sectionId] - Filter by section ID
+   * @query {boolean} [isApproved] - Filter by approval status
+   * @returns {Object} Results array and pagination info
+   * 
+   * @example
+   * GET /api/v1/examination/results?page=1&limit=20&examId=exam123&isApproved=false
+   */
   getAllResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -149,6 +248,16 @@ export class ExaminationController {
     }
   };
 
+  /**
+   * Get Result By ID Endpoint Handler
+   * 
+   * Retrieves a specific result by ID.
+   * 
+   * @route GET /api/v1/examination/results/:id
+   * @access Private
+   * @param {string} id - Result ID
+   * @returns {Result} Result object
+   */
   getResultById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -160,6 +269,27 @@ export class ExaminationController {
     }
   };
 
+  /**
+   * Create Result Endpoint Handler
+   * 
+   * Creates a new exam result entry.
+   * 
+   * @route POST /api/v1/examination/results
+   * @access Private (Requires examination.create permission)
+   * @body {CreateResultDTO} Result creation data
+   * @returns {Result} Created result
+   * 
+   * @example
+   * POST /api/v1/examination/results
+   * Body: {
+   *   examId: "exam123",
+   *   studentId: "student456",
+   *   sectionId: "section789",
+   *   obtainedMarks: 85,
+   *   totalMarks: 100,
+   *   remarks: "Good performance"
+   * }
+   */
   createResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const resultData: CreateResultDTO = {
@@ -185,6 +315,24 @@ export class ExaminationController {
     }
   };
 
+  /**
+   * Update Result Endpoint Handler
+   * 
+   * Updates an existing result entry.
+   * 
+   * @route PUT /api/v1/examination/results/:id
+   * @access Private (Requires examination.update permission)
+   * @param {string} id - Result ID
+   * @body {UpdateResultDTO} Partial result data to update
+   * @returns {Result} Updated result
+   * 
+   * @example
+   * PUT /api/v1/examination/results/result123
+   * Body: {
+   *   obtainedMarks: 90,
+   *   remarks: "Excellent performance"
+   * }
+   */
   updateResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -204,6 +352,16 @@ export class ExaminationController {
     }
   };
 
+  /**
+   * Approve Result Endpoint Handler
+   * 
+   * Approves a result entry.
+   * 
+   * @route POST /api/v1/examination/results/:id/approve
+   * @access Private (Requires examination.approve permission)
+   * @param {string} id - Result ID
+   * @returns {Result} Approved result
+   */
   approveResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -222,6 +380,22 @@ export class ExaminationController {
 
   // ==================== Re-Evaluations ====================
 
+  /**
+   * Get All Re-Evaluations Endpoint Handler
+   * 
+   * Retrieves all re-evaluation requests with pagination and optional filters.
+   * 
+   * @route GET /api/v1/examination/re-evaluations
+   * @access Private
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [studentId] - Filter by student ID
+   * @query {string} [status] - Filter by status
+   * @returns {Object} Re-evaluations array and pagination info
+   * 
+   * @example
+   * GET /api/v1/examination/re-evaluations?page=1&limit=20&studentId=student123&status=pending
+   */
   getAllReEvaluations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -252,6 +426,25 @@ export class ExaminationController {
     }
   };
 
+  /**
+   * Create Re-Evaluation Endpoint Handler
+   * 
+   * Creates a new re-evaluation request for a disputed result.
+   * 
+   * @route POST /api/v1/examination/re-evaluations
+   * @access Private
+   * @body {CreateReEvaluationDTO} Re-evaluation creation data
+   * @returns {ReEvaluation} Created re-evaluation request
+   * 
+   * @example
+   * POST /api/v1/examination/re-evaluations
+   * Body: {
+   *   resultId: "result123",
+   *   studentId: "student456",
+   *   examId: "exam789",
+   *   reason: "Discrepancy in marks calculation"
+   * }
+   */
   createReEvaluation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const reEvalData: CreateReEvaluationDTO = {
@@ -273,4 +466,3 @@ export class ExaminationController {
     }
   };
 }
-

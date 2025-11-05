@@ -1,3 +1,24 @@
+/**
+ * Payroll Service
+ * 
+ * This service handles all payroll management business logic including:
+ * - Salary structure management (CRUD operations)
+ * - Salary processing with tax calculations
+ * - Salary approval workflow
+ * - Salary slip generation
+ * - Tax calculations according to Pakistan tax laws
+ * - Payroll summaries and reports
+ * 
+ * The payroll system manages:
+ * - Salary structures with allowances and deductions
+ * - Monthly salary processing with attendance-based calculations
+ * - Income tax calculations (Pakistan tax brackets FY 2024)
+ * - Salary approval and payment tracking
+ * - Salary slip generation and history
+ * 
+ * @module services/payroll.service
+ */
+
 import { PayrollRepository } from '@/repositories/payroll.repository';
 import {
   SalaryStructure,
@@ -23,6 +44,25 @@ export class PayrollService {
 
   // ==================== Salary Structures ====================
 
+  /**
+   * Get all salary structures with pagination and filters
+   * 
+   * Retrieves salary structures with optional filtering by employee and active status.
+   * Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of structures to return
+   * @param {number} [offset=0] - Number of structures to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.employeeId] - Filter by employee ID
+   * @param {boolean} [filters.isActive] - Filter by active status
+   * @returns {Promise<{structures: SalaryStructure[], total: number}>} Structures and total count
+   * 
+   * @example
+   * const { structures, total } = await payrollService.getAllSalaryStructures(20, 0, {
+   *   employeeId: 'employee123',
+   *   isActive: true
+   * });
+   */
   async getAllSalaryStructures(
     limit: number = 50,
     offset: number = 0,
@@ -48,6 +88,15 @@ export class PayrollService {
     }
   }
 
+  /**
+   * Get salary structure by ID
+   * 
+   * Retrieves a specific salary structure by its ID.
+   * 
+   * @param {string} id - Salary structure ID
+   * @returns {Promise<SalaryStructure>} Salary structure object
+   * @throws {NotFoundError} If structure not found
+   */
   async getSalaryStructureById(id: string): Promise<SalaryStructure> {
     try {
       const structure = await this.payrollRepository.findSalaryStructureById(id);
@@ -64,6 +113,15 @@ export class PayrollService {
     }
   }
 
+  /**
+   * Get active salary structure for an employee
+   * 
+   * Retrieves the currently active salary structure for an employee.
+   * 
+   * @param {string} employeeId - Employee ID
+   * @returns {Promise<SalaryStructure>} Active salary structure
+   * @throws {NotFoundError} If active structure not found
+   */
   async getActiveSalaryStructure(employeeId: string): Promise<SalaryStructure> {
     try {
       const structure = await this.payrollRepository.findActiveSalaryStructure(employeeId);
@@ -80,6 +138,25 @@ export class PayrollService {
     }
   }
 
+  /**
+   * Create a salary structure
+   * 
+   * Creates a new salary structure with validation.
+   * Validates required fields and basic salary amount.
+   * 
+   * @param {CreateSalaryStructureDTO} structureData - Salary structure creation data
+   * @returns {Promise<SalaryStructure>} Created salary structure
+   * @throws {ValidationError} If structure data is invalid
+   * 
+   * @example
+   * const structure = await payrollService.createSalaryStructure({
+   *   employeeId: 'employee123',
+   *   basicSalary: 100000,
+   *   houseRentAllowance: 50000,
+   *   medicalAllowance: 10000,
+   *   effectiveDate: '2024-01-01'
+   * });
+   */
   async createSalaryStructure(structureData: CreateSalaryStructureDTO): Promise<SalaryStructure> {
     try {
       if (!structureData.employeeId || !structureData.basicSalary || !structureData.effectiveDate) {
@@ -100,6 +177,18 @@ export class PayrollService {
     }
   }
 
+  /**
+   * Update a salary structure
+   * 
+   * Updates an existing salary structure's information.
+   * Validates basic salary if being updated.
+   * 
+   * @param {string} id - Salary structure ID
+   * @param {UpdateSalaryStructureDTO} structureData - Partial structure data to update
+   * @returns {Promise<SalaryStructure>} Updated salary structure
+   * @throws {NotFoundError} If structure not found
+   * @throws {ValidationError} If basic salary is invalid
+   */
   async updateSalaryStructure(id: string, structureData: UpdateSalaryStructureDTO): Promise<SalaryStructure> {
     try {
       const existing = await this.payrollRepository.findSalaryStructureById(id);
@@ -125,13 +214,21 @@ export class PayrollService {
 
   /**
    * Calculate income tax according to Pakistan tax laws (FY 2024)
-   * Tax brackets:
+   * 
+   * Calculates annual income tax based on Pakistan tax brackets:
    * - Up to PKR 600,000: 0%
    * - PKR 600,001 - 1,200,000: 2.5%
    * - PKR 1,200,001 - 2,400,000: 12.5%
    * - PKR 2,400,001 - 3,600,000: 20%
    * - PKR 3,600,001 - 6,000,000: 25%
    * - Above PKR 6,000,000: 32.5%
+   * 
+   * @param {number} annualIncome - Annual income in PKR
+   * @returns {number} Calculated annual tax amount (rounded)
+   * 
+   * @example
+   * const tax = payrollService.calculateIncomeTax(1500000);
+   * console.log(tax); // 112500 (calculated based on tax brackets)
    */
   calculateIncomeTax(annualIncome: number): number {
     let tax = 0;
@@ -179,6 +276,15 @@ export class PayrollService {
 
   /**
    * Calculate monthly tax from annual tax
+   * 
+   * Divides annual tax by 12 to get monthly tax deduction.
+   * 
+   * @param {number} annualTax - Annual tax amount
+   * @returns {number} Monthly tax amount (rounded)
+   * 
+   * @example
+   * const monthlyTax = payrollService.calculateMonthlyTax(120000);
+   * console.log(monthlyTax); // 10000
    */
   calculateMonthlyTax(annualTax: number): number {
     return Math.round(annualTax / 12);
@@ -186,6 +292,26 @@ export class PayrollService {
 
   // ==================== Salary Processing ====================
 
+  /**
+   * Get all salary processings with pagination and filters
+   * 
+   * Retrieves salary processings with optional filtering by employee, payroll period,
+   * and status. Returns paginated results.
+   * 
+   * @param {number} [limit=50] - Maximum number of processings to return
+   * @param {number} [offset=0] - Number of processings to skip
+   * @param {Object} [filters] - Optional filter criteria
+   * @param {string} [filters.employeeId] - Filter by employee ID
+   * @param {string} [filters.payrollPeriod] - Filter by payroll period (YYYY-MM)
+   * @param {string} [filters.status] - Filter by status
+   * @returns {Promise<{processings: SalaryProcessing[], total: number}>} Processings and total count
+   * 
+   * @example
+   * const { processings, total } = await payrollService.getAllSalaryProcessings(20, 0, {
+   *   payrollPeriod: '2024-10',
+   *   status: 'processed'
+   * });
+   */
   async getAllSalaryProcessings(
     limit: number = 50,
     offset: number = 0,
@@ -212,6 +338,15 @@ export class PayrollService {
     }
   }
 
+  /**
+   * Get salary processing by ID
+   * 
+   * Retrieves a specific salary processing by its ID.
+   * 
+   * @param {string} id - Salary processing ID
+   * @returns {Promise<SalaryProcessing>} Salary processing object
+   * @throws {NotFoundError} If processing not found
+   */
   async getSalaryProcessingById(id: string): Promise<SalaryProcessing> {
     try {
       const processing = await this.payrollRepository.findSalaryProcessingById(id);
@@ -228,6 +363,30 @@ export class PayrollService {
     }
   }
 
+  /**
+   * Process salary for an employee
+   * 
+   * Processes monthly salary with comprehensive calculations including:
+   * - Basic salary based on attendance ratio
+   * - Allowances (HRA, medical, transport, etc.)
+   * - Tax calculations (Pakistan tax brackets)
+   * - Deductions (PF, advance, tax, etc.)
+   * - Net salary calculation
+   * 
+   * @param {ProcessSalaryDTO} processingData - Salary processing data
+   * @param {string} [processedBy] - ID of user processing the salary
+   * @returns {Promise<SalaryProcessing>} Created salary processing record
+   * @throws {ValidationError} If processing data is invalid
+   * @throws {NotFoundError} If salary structure not found
+   * 
+   * @example
+   * const processing = await payrollService.processSalary({
+   *   employeeId: 'employee123',
+   *   payrollPeriod: '2024-10',
+   *   daysWorked: 25,
+   *   bonus: 10000
+   * }, 'hr456');
+   */
   async processSalary(processingData: ProcessSalaryDTO, processedBy?: string): Promise<SalaryProcessing> {
     try {
       if (!processingData.employeeId || !processingData.payrollPeriod) {
@@ -345,6 +504,25 @@ export class PayrollService {
     }
   }
 
+  /**
+   * Approve a processed salary
+   * 
+   * Approves a processed salary and generates a salary slip.
+   * Only processed salaries can be approved.
+   * 
+   * @param {string} id - Salary processing ID
+   * @param {ApproveSalaryDTO} approveData - Approval data
+   * @param {string} [approvedBy] - ID of user approving the salary
+   * @returns {Promise<SalaryProcessing>} Updated salary processing
+   * @throws {NotFoundError} If processing not found
+   * @throws {ValidationError} If salary is not in processed status
+   * 
+   * @example
+   * const processing = await payrollService.approveSalary('processing123', {
+   *   status: 'approved',
+   *   remarks: 'Approved for payment'
+   * }, 'manager456');
+   */
   async approveSalary(id: string, approveData: ApproveSalaryDTO, approvedBy?: string): Promise<SalaryProcessing> {
     try {
       const processing = await this.payrollRepository.findSalaryProcessingById(id);
@@ -386,6 +564,18 @@ export class PayrollService {
     }
   }
 
+  /**
+   * Mark salary as paid
+   * 
+   * Marks an approved salary as paid with payment date.
+   * Only approved salaries can be marked as paid.
+   * 
+   * @param {string} id - Salary processing ID
+   * @param {string} paymentDate - Payment date (YYYY-MM-DD)
+   * @returns {Promise<SalaryProcessing>} Updated salary processing
+   * @throws {NotFoundError} If processing not found
+   * @throws {ValidationError} If salary is not approved
+   */
   async markAsPaid(id: string, paymentDate: string): Promise<SalaryProcessing> {
     try {
       const processing = await this.payrollRepository.findSalaryProcessingById(id);
@@ -415,6 +605,18 @@ export class PayrollService {
 
   // ==================== Salary Slips ====================
 
+  /**
+   * Get salary slips for an employee
+   * 
+   * Retrieves salary slips for a specific employee, limited to recent slips.
+   * 
+   * @param {string} employeeId - Employee ID
+   * @param {number} [limit=12] - Maximum number of slips to return (default: 12 months)
+   * @returns {Promise<SalarySlip[]>} Array of salary slips
+   * 
+   * @example
+   * const slips = await payrollService.getSalarySlipsByEmployee('employee123', 6);
+   */
   async getSalarySlipsByEmployee(employeeId: string, limit: number = 12): Promise<SalarySlip[]> {
     try {
       return await this.payrollRepository.findSalarySlipsByEmployee(employeeId, limit);
@@ -426,6 +628,21 @@ export class PayrollService {
 
   // ==================== Tax Calculation ====================
 
+  /**
+   * Calculate tax for an employee for a tax year
+   * 
+   * Calculates annual tax liability based on paid salaries for a tax year.
+   * Includes tax paid, tax liability, and potential tax refund.
+   * 
+   * @param {string} employeeId - Employee ID
+   * @param {string} taxYear - Tax year (YYYY)
+   * @returns {Promise<TaxCalculation>} Tax calculation with liability and refund
+   * 
+   * @example
+   * const taxCalc = await payrollService.calculateTaxForEmployee('employee123', '2024');
+   * console.log(taxCalc.taxLiability); // 120000
+   * console.log(taxCalc.taxPaid); // 115000
+   */
   async calculateTaxForEmployee(employeeId: string, taxYear: string): Promise<TaxCalculation> {
     try {
       // Get all salary processings for the tax year
@@ -462,6 +679,20 @@ export class PayrollService {
 
   // ==================== Payroll Summary ====================
 
+  /**
+   * Get payroll summary for a period
+   * 
+   * Generates a comprehensive payroll summary for a specific payroll period.
+   * Includes totals for gross salary, deductions, net salary, tax, and employee counts.
+   * 
+   * @param {string} payrollPeriod - Payroll period (YYYY-MM)
+   * @returns {Promise<PayrollSummary>} Payroll summary with totals and statistics
+   * 
+   * @example
+   * const summary = await payrollService.getPayrollSummary('2024-10');
+   * console.log(summary.totalGrossSalary); // 5000000
+   * console.log(summary.totalNetSalary); // 4500000
+   */
   async getPayrollSummary(payrollPeriod: string): Promise<PayrollSummary> {
     try {
       const allProcessings = await this.payrollRepository.findAllSalaryProcessings(1000, 0, {
@@ -493,9 +724,20 @@ export class PayrollService {
 
   // ==================== Helper Methods ====================
 
+  /**
+   * Get number of days in a month for a given period
+   * 
+   * Calculates the number of days in a month based on payroll period.
+   * 
+   * @private
+   * @param {string} period - Payroll period (YYYY-MM)
+   * @returns {number} Number of days in the month
+   * 
+   * @example
+   * const days = this.getDaysInMonth('2024-10'); // 31
+   */
   private getDaysInMonth(period: string): number {
     const [year, month] = period.split('-').map(Number);
     return new Date(year, month, 0).getDate();
   }
 }
-

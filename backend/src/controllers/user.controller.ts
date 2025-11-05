@@ -1,3 +1,12 @@
+/**
+ * User Controller
+ * 
+ * Handles HTTP requests for user management endpoints.
+ * Validates input, calls service layer, and formats responses.
+ * 
+ * @module controllers/user.controller
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '@/services/user.service';
 import { CreateUserDTO, UpdateUserDTO } from '@/models/User.model';
@@ -12,6 +21,21 @@ export class UserController {
     this.userService = new UserService();
   }
 
+  /**
+   * Get All Users Endpoint Handler
+   * 
+   * Retrieves all users with pagination and optional search.
+   * 
+   * @route GET /api/v1/users
+   * @access Private (Requires user.read permission)
+   * @query {number} [page=1] - Page number
+   * @query {number} [limit=20] - Items per page
+   * @query {string} [search] - Search query
+   * @returns {Object} Users array and pagination info
+   * 
+   * @example
+   * GET /api/v1/users?page=1&limit=20&search=john
+   */
   getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -38,6 +62,16 @@ export class UserController {
     }
   };
 
+  /**
+   * Get User By ID Endpoint Handler
+   * 
+   * Retrieves a specific user by ID.
+   * 
+   * @route GET /api/v1/users/:id
+   * @access Private
+   * @param {string} id - User ID
+   * @returns {User} User object
+   */
   getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -49,6 +83,25 @@ export class UserController {
     }
   };
 
+  /**
+   * Create User Endpoint Handler
+   * 
+   * Creates a new user account.
+   * 
+   * @route POST /api/v1/users
+   * @access Private (Requires user.create permission)
+   * @body {CreateUserDTO} User creation data
+   * @returns {User} Created user
+   * 
+   * @example
+   * POST /api/v1/users
+   * Body: {
+   *   email: "user@example.com",
+   *   password: "SecurePass123!",
+   *   firstName: "John",
+   *   lastName: "Doe"
+   * }
+   */
   createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userData: CreateUserDTO = {
@@ -62,13 +115,13 @@ export class UserController {
         gender: req.body.gender,
       };
 
+      // Validate required fields
       if (!userData.email || !userData.firstName || !userData.lastName) {
         throw new ValidationError('Email, firstName, and lastName are required');
       }
 
-      // If password not provided, generate a temporary one (optional)
+      // Password is required for user creation
       if (!userData.password) {
-        // You might want to generate a temporary password or require it
         throw new ValidationError('Password is required');
       }
 
@@ -80,6 +133,24 @@ export class UserController {
     }
   };
 
+  /**
+   * Update User Endpoint Handler
+   * 
+   * Updates an existing user's information.
+   * 
+   * @route PUT /api/v1/users/:id
+   * @access Private (Requires user.update permission or own profile)
+   * @param {string} id - User ID
+   * @body {UpdateUserDTO} Partial user data to update
+   * @returns {User} Updated user
+   * 
+   * @example
+   * PUT /api/v1/users/user123
+   * Body: {
+   *   firstName: "Jane",
+   *   phone: "+92-300-1234567"
+   * }
+   */
   updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -102,6 +173,20 @@ export class UserController {
     }
   };
 
+  /**
+   * Delete User Endpoint Handler
+   * 
+   * Deletes a user (soft delete by default).
+   * 
+   * @route DELETE /api/v1/users/:id
+   * @access Private (Requires user.delete permission)
+   * @param {string} id - User ID
+   * @query {boolean} [soft=true] - Whether to soft delete (default: true)
+   * @returns {message: "User deleted successfully"}
+   * 
+   * @example
+   * DELETE /api/v1/users/user123?soft=true
+   */
   deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -114,6 +199,16 @@ export class UserController {
     }
   };
 
+  /**
+   * Activate User Endpoint Handler
+   * 
+   * Activates a user account, allowing them to login.
+   * 
+   * @route POST /api/v1/users/:id/activate
+   * @access Private (Requires admin role)
+   * @param {string} id - User ID
+   * @returns {message: "User activated successfully"}
+   */
   activateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -125,6 +220,16 @@ export class UserController {
     }
   };
 
+  /**
+   * Deactivate User Endpoint Handler
+   * 
+   * Deactivates a user account, preventing them from logging in.
+   * 
+   * @route POST /api/v1/users/:id/deactivate
+   * @access Private (Requires admin role)
+   * @param {string} id - User ID
+   * @returns {message: "User deactivated successfully"}
+   */
   deactivateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
@@ -136,4 +241,3 @@ export class UserController {
     }
   };
 }
-
