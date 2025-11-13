@@ -1,13 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Form, Input, Button, Card, message, Space, Upload, Select } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, UploadOutlined } from '@ant-design/icons';
-import { admissionAPI, CreateApplicationDTO } from '../../../../api/admission.api';
+import { admissionAPI, CreateApplicationDTO, AdmissionDocument } from '../../../../api/admission.api';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthContext } from '../../../../contexts/AuthContext';
 import { route } from '../../../routes/constant';
+import { academicAPI, Program } from '../../../../api/academic.api';
+import type { RcFile, UploadFile } from 'antd/es/upload/interface';
 
 const { Option } = Select;
-const { TextArea } = Input;
+
+type DocumentType = 'matric' | 'intermediate' | 'cnic' | 'photo';
+
+const REQUIRED_DOCUMENTS: Array<{
+  type: DocumentType;
+  label: string;
+}> = [
+  { type: 'matric', label: 'Matric Certificate' },
+  { type: 'intermediate', label: 'Intermediate Certificate' },
+  { type: 'cnic', label: 'CNIC Copy' },
+  { type: 'photo', label: 'Photograph' },
+];
 
 interface ApplicationFormProps {
   isEdit?: boolean;
@@ -19,9 +32,23 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ isEdit = false }) => 
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthContext();
   const [loading, setLoading] = useState(false);
-  const [fileList, setFileList] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [programLoading, setProgramLoading] = useState(false);
+  const [uploadMap, setUploadMap] = useState<Record<DocumentType, UploadFile[]>>({
+    matric: [],
+    intermediate: [],
+    cnic: [],
+    photo: [],
+  });
+  const [documentUrls, setDocumentUrls] = useState<Record<DocumentType, string>>({
+    matric: '',
+    intermediate: '',
+    cnic: '',
+    photo: '',
+  });
 
   useEffect(() => {
+    loadPrograms();
     if (isEdit && id) {
       // Load application data if editing
       loadApplication(id);
@@ -33,14 +60,58 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ isEdit = false }) => 
     }
   }, [id, isEdit, user]);
 
+  const loadPrograms = async () => {
+    try {
+      setProgramLoading(true);
+      const response = await academicAPI.getPrograms(1, 100, { isActive: true });
+      setPrograms(response.programs);
+    } catch (error: any) {
+      message.error(error.message || 'Failed to load programs');
+    } finally {
+      setProgramLoading(false);
+    }
+  };
+
   const loadApplication = async (applicationId: string) => {
     try {
       setLoading(true);
-      const application = await admissionAPI.getApplication(applicationId);
+      const [application, documents] = await Promise.all([
+        admissionAPI.getApplication(applicationId),
+        admissionAPI.getApplicationDocuments(applicationId),
+      ]);
       form.setFieldsValue({
         userId: application.userId,
         programId: application.programId,
       });
+      if (documents && documents.length > 0) {
+        const updatedUploads: Record<DocumentType, UploadFile[]> = {
+          matric: [],
+          intermediate: [],
+          cnic: [],
+          photo: [],
+        };
+        const updatedUrls: Record<DocumentType, string> = {
+          matric: '',
+          intermediate: '',
+          cnic: '',
+          photo: '',
+        };
+        documents.forEach((doc: AdmissionDocument) => {
+          if (doc.documentType in updatedUploads) {
+            updatedUploads[doc.documentType as DocumentType] = [
+              {
+                uid: doc.id,
+                name: doc.documentName,
+                status: 'done',
+                url: doc.documentUrl,
+              },
+            ];
+            updatedUrls[doc.documentType as DocumentType] = doc.documentUrl;
+          }
+        });
+        setUploadMap(updatedUploads);
+        setDocumentUrls(updatedUrls);
+      }
     } catch (error: any) {
       message.error(error.message || 'Failed to load application');
     } finally {
@@ -52,19 +123,29 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ isEdit = false }) => 
     try {
       setLoading(true);
       
+      const documentsPayload = REQUIRED_DOCUMENTS.reduce<
+        NonNullable<CreateApplicationDTO['documents']>
+      >((acc, doc) => {
+        const url = documentUrls[doc.type];
+        const file = uploadMap[doc.type]?.[0];
+        if (url && file) {
+          acc.push({
+            documentType: doc.type,
+            documentName: file.name,
+            documentUrl: url,
+          });
+        }
+        return acc;
+      }, []);
+
       const applicationData: CreateApplicationDTO = {
         userId: values.userId,
         programId: values.programId,
-        documents: fileList.map((file) => ({
-          documentType: file.documentType || 'other',
-          documentName: file.name,
-          documentUrl: file.url || file.response?.url || '',
-        })),
+        documents: documentsPayload,
       };
 
       if (isEdit && id) {
-        // Update logic would go here if needed
-        message.warning('Update functionality not yet implemented');
+        message.warning('Application update is not available yet');
       } else {
         await admissionAPI.createApplication(applicationData);
         message.success('Application submitted successfully');
@@ -77,24 +158,61 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ isEdit = false }) => 
     }
   };
 
-  const handleFileChange = (info: any, documentType: string) => {
-    const newFileList = [...fileList];
-    const fileIndex = newFileList.findIndex((f) => f.uid === info.file.uid);
-    
-    if (fileIndex >= 0) {
-      newFileList[fileIndex] = {
-        ...info.file,
-        documentType,
-      };
-    } else {
-      newFileList.push({
-        ...info.file,
-        documentType,
-      });
-    }
-    
-    setFileList(newFileList);
-  };
+  const convertToBase64 = (file: RcFile): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+
+  const uploadProps = useMemo(() => {
+    const createUploadProps = (type: DocumentType) => ({
+      fileList: uploadMap[type],
+      maxCount: 1,
+      customRequest: async (options: any) => {
+        const { file, onSuccess, onError } = options;
+        try {
+          const base64 = await convertToBase64(file as RcFile);
+          setDocumentUrls((prev) => ({
+            ...prev,
+            [type]: base64,
+          }));
+          setUploadMap((prev) => ({
+            ...prev,
+            [type]: [
+              {
+                uid: (file as RcFile).uid,
+                name: (file as RcFile).name,
+                status: 'done',
+                url: base64,
+              },
+            ],
+          }));
+          onSuccess && onSuccess('ok');
+        } catch (error) {
+          onError && onError(error);
+        }
+      },
+      onRemove: () => {
+        setUploadMap((prev) => ({
+          ...prev,
+          [type]: [],
+        }));
+        setDocumentUrls((prev) => ({
+          ...prev,
+          [type]: '',
+        }));
+      },
+      accept: '.pdf,.jpg,.jpeg,.png',
+      listType: 'text' as const,
+    });
+
+    return REQUIRED_DOCUMENTS.reduce<Record<DocumentType, any>>((acc, doc) => {
+      acc[doc.type] = createUploadProps(doc.type);
+      return acc;
+    }, {} as Record<DocumentType, any>);
+  }, [uploadMap]);
 
   return (
     <Card
@@ -125,56 +243,30 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ isEdit = false }) => 
           label="Program"
           rules={[{ required: true, message: 'Please select a program' }]}
         >
-          <Select placeholder="Select Program">
-            <Option value="prog1">BS Computer Science</Option>
-            <Option value="prog2">BS Software Engineering</Option>
-            <Option value="prog3">BS Information Technology</Option>
-            {/* Programs would come from API */}
+          <Select
+            placeholder="Select Program"
+            loading={programLoading}
+            showSearch
+            optionFilterProp="children"
+          >
+            {programs.map((program) => (
+              <Option key={program.id} value={program.id}>
+                {program.name}
+              </Option>
+            ))}
           </Select>
         </Form.Item>
 
         <Form.Item label="Required Documents">
           <Space direction="vertical" style={{ width: '100%' }}>
-            <div>
-              <strong>Matric Certificate:</strong>
-              <Upload
-                beforeUpload={() => false}
-                onChange={(info) => handleFileChange(info, 'matric')}
-                maxCount={1}
-              >
-                <Button icon={<UploadOutlined />}>Upload Matric Certificate</Button>
-              </Upload>
-            </div>
-            <div>
-              <strong>Intermediate Certificate:</strong>
-              <Upload
-                beforeUpload={() => false}
-                onChange={(info) => handleFileChange(info, 'intermediate')}
-                maxCount={1}
-              >
-                <Button icon={<UploadOutlined />}>Upload Intermediate Certificate</Button>
-              </Upload>
-            </div>
-            <div>
-              <strong>CNIC Copy:</strong>
-              <Upload
-                beforeUpload={() => false}
-                onChange={(info) => handleFileChange(info, 'cnic')}
-                maxCount={1}
-              >
-                <Button icon={<UploadOutlined />}>Upload CNIC</Button>
-              </Upload>
-            </div>
-            <div>
-              <strong>Photograph:</strong>
-              <Upload
-                beforeUpload={() => false}
-                onChange={(info) => handleFileChange(info, 'photo')}
-                maxCount={1}
-              >
-                <Button icon={<UploadOutlined />}>Upload Photo</Button>
-              </Upload>
-            </div>
+            {REQUIRED_DOCUMENTS.map((doc) => (
+              <div key={doc.type}>
+                <strong>{doc.label}:</strong>
+                <Upload {...uploadProps[doc.type]}>
+                  <Button icon={<UploadOutlined />}>Upload {doc.label}</Button>
+                </Upload>
+              </div>
+            ))}
           </Space>
         </Form.Item>
 

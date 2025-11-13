@@ -1,3 +1,25 @@
+/**
+ * Dashboard Service
+ * 
+ * Service for aggregating and providing dashboard data across all modules.
+ * Handles statistics, recent activities, and upcoming events:
+ * - Dashboard statistics aggregation (students, faculty, payments, etc.)
+ * - Recent activities from multiple modules
+ * - Upcoming events from administration module
+ * 
+ * The dashboard provides a unified view of:
+ * - System-wide statistics and metrics
+ * - Recent activities across all modules (students, payments, applications, exams)
+ * - Upcoming events and important dates
+ * 
+ * Features:
+ * - Parallel data fetching for optimal performance
+ * - Time-based formatting for activities
+ * - Comprehensive error handling
+ * 
+ * @module services/dashboard.service
+ */
+
 import { StudentRepository } from '../repositories/student.repository';
 import { UserRepository } from '../repositories/user.repository';
 import { FinanceRepository } from '../repositories/finance.repository';
@@ -7,6 +29,7 @@ import { AcademicRepository } from '../repositories/academic.repository';
 import { LibraryRepository } from '../repositories/library.repository';
 import { HRRepository } from '../repositories/hr.repository';
 import { AdministrationRepository } from '../repositories/administration.repository';
+import { logger } from '@/config/logger';
 
 const studentRepository = new StudentRepository();
 const userRepository = new UserRepository();
@@ -18,38 +41,95 @@ const libraryRepository = new LibraryRepository();
 const hrRepository = new HRRepository();
 const administrationRepository = new AdministrationRepository();
 
-interface DashboardStats {
+/**
+ * Dashboard Statistics Interface
+ * 
+ * Comprehensive statistics aggregated from all modules.
+ * 
+ * @interface DashboardStats
+ */
+export interface DashboardStats {
+  /** Total number of enrolled students */
   totalStudents: number;
+  /** Total number of faculty members */
   totalFaculty: number;
+  /** Total payment amount (in PKR) */
   totalPayments: number;
+  /** Number of pending admission applications */
   pendingApplications: number;
+  /** Number of upcoming examinations */
   upcomingExams: number;
+  /** Number of active academic programs */
   activePrograms: number;
+  /** Total number of books in library */
   totalBooks: number;
+  /** Number of overdue book borrowings */
   overdueBooks: number;
+  /** Total number of employees */
   totalEmployees: number;
+  /** Number of pending leave requests */
   pendingLeaveRequests: number;
 }
 
-interface RecentActivity {
+/**
+ * Recent Activity Interface
+ * 
+ * Represents a recent activity/event from any module.
+ * 
+ * @interface RecentActivity
+ */
+export interface RecentActivity {
+  /** Activity unique identifier */
   id: string;
+  /** Activity type (student, payment, admission, exam, etc.) */
   type: string;
+  /** Human-readable activity description */
   action: string;
+  /** Formatted time string (e.g., "2 hours ago") */
   time: string;
+  /** Activity status (success, warning, info, error) */
   status: string;
 }
 
-interface UpcomingEvent {
+/**
+ * Upcoming Event Interface
+ * 
+ * Represents an upcoming event from the administration module.
+ * 
+ * @interface UpcomingEvent
+ */
+export interface UpcomingEvent {
+  /** Event unique identifier */
   id: string;
+  /** Event title */
   title: string;
+  /** Event type (academic, cultural, sports, etc.) */
   type: string;
+  /** Event date (ISO format) */
   date: string;
+  /** Optional event description */
   description?: string;
 }
 
+/**
+ * Dashboard Service Class
+ * 
+ * Provides methods to aggregate and format dashboard data from multiple modules.
+ */
 class DashboardService {
   /**
    * Get comprehensive dashboard statistics
+   * 
+   * Aggregates statistics from multiple repositories in parallel for optimal performance.
+   * Calculates totals, counts, and filtered metrics across all modules.
+   * 
+   * @returns {Promise<DashboardStats>} Comprehensive dashboard statistics
+   * @throws {Error} If any repository call fails
+   * 
+   * @example
+   * const stats = await dashboardService.getDashboardStats();
+   * console.log(`Total students: ${stats.totalStudents}`);
+   * console.log(`Upcoming exams: ${stats.upcomingExams}`);
    */
   async getDashboardStats(): Promise<DashboardStats> {
     try {
@@ -130,12 +210,26 @@ class DashboardService {
         pendingLeaveRequests,
       };
     } catch (error: any) {
+      logger.error('Failed to fetch dashboard statistics', { error: error.message });
       throw new Error(`Failed to fetch dashboard statistics: ${error.message}`);
     }
   }
 
   /**
    * Get recent activities across all modules
+   * 
+   * Fetches recent activities from multiple modules (students, payments, applications, exams)
+   * and transforms them into a unified activity format with human-readable time stamps.
+   * 
+   * @param {number} [limit=10] - Maximum number of activities to return
+   * @returns {Promise<RecentActivity[]>} Array of recent activities sorted by time (most recent first)
+   * @throws {Error} If any repository call fails
+   * 
+   * @example
+   * const activities = await dashboardService.getRecentActivities(5);
+   * activities.forEach(activity => {
+   *   console.log(`${activity.action} - ${activity.time}`);
+   * });
    */
   async getRecentActivities(limit: number = 10): Promise<RecentActivity[]> {
     try {
@@ -210,12 +304,26 @@ class DashboardService {
       // Activities are already fetched in reverse chronological order from repositories
       return activities.slice(0, limit);
     } catch (error: any) {
+      logger.error('Failed to fetch recent activities', { error: error.message });
       throw new Error(`Failed to fetch recent activities: ${error.message}`);
     }
   }
 
   /**
    * Get upcoming events
+   * 
+   * Fetches upcoming events from the administration module that are active
+   * and have a start date on or after today.
+   * 
+   * @param {number} [limit=10] - Maximum number of events to return
+   * @returns {Promise<UpcomingEvent[]>} Array of upcoming events sorted by date
+   * @throws {Error} If repository call fails
+   * 
+   * @example
+   * const events = await dashboardService.getUpcomingEvents(5);
+   * events.forEach(event => {
+   *   console.log(`${event.title} on ${event.date}`);
+   * });
    */
   async getUpcomingEvents(limit: number = 10): Promise<UpcomingEvent[]> {
     try {
@@ -233,12 +341,24 @@ class DashboardService {
         description: event.description,
       }));
     } catch (error: any) {
+      logger.error('Failed to fetch upcoming events', { error: error.message });
       throw new Error(`Failed to fetch upcoming events: ${error.message}`);
     }
   }
 
   /**
-   * Format time as "X hours ago", "X days ago", etc.
+   * Format time as relative time string
+   * 
+   * Converts a date to a human-readable relative time string
+   * (e.g., "Just now", "5 minutes ago", "2 hours ago", "3 days ago").
+   * 
+   * @param {Date} date - Date to format
+   * @returns {string} Formatted time string
+   * @private
+   * 
+   * @example
+   * const timeAgo = this.formatTimeAgo(new Date(Date.now() - 3600000));
+   * // Returns: "1 hour ago"
    */
   private formatTimeAgo(date: Date): string {
     const now = new Date();

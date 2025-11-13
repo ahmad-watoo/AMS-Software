@@ -8,6 +8,9 @@ const Dashboard = lazy(
 );
 
 //admission modules
+const AdmissionOverview = lazy(
+  () => import("../components/module/Admission/Admission")
+);
 const AdmissionStatus = lazy(
   () => import("../components/module/Admission/Subsections/AdmissionStatus")
 );
@@ -257,6 +260,18 @@ const CourseForm = lazy(
 const CourseDetail = lazy(
   () => import("../components/module/Academic/CourseDetail")
 );
+const SectionList = lazy(
+  () => import("../components/module/Academic/SectionList")
+);
+const SectionForm = lazy(
+  () => import("../components/module/Academic/SectionForm")
+);
+const SectionDetail = lazy(
+  () => import("../components/module/Academic/SectionDetail")
+);
+const CurriculumPlanner = lazy(
+  () => import("../components/module/Academic/CurriculumPlanner")
+);
 // Timetable Management
 const TimetableList = lazy(
   () => import("../components/module/timeTable/TimetableList")
@@ -427,15 +442,13 @@ export const protectedRoutes: RouteObject[] = [
     element: <Dashboard />,
   },
   {
+    path: route.ADMISSION_OVERVIEW,
+    element: <AdmissionOverview />,
+  },
+  {
     path: route.ADMISSION_ADMISSION_STATUS,
     element: <AdmissionStatus />,
   },
-
-  {
-    path: route.ADMISSION_APLLICATION_FORMS,
-    element: <ApplicationForms />,
-  },
-
   {
     path: route.ADMISSION_ELIGIBILITY_CHECK,
     element: <EligibilityCheck />,
@@ -784,6 +797,26 @@ export const protectedRoutes: RouteObject[] = [
   {
     path: route.ACADEMIC_COURSE_DETAIL,
     element: <CourseDetail />,
+  },
+  {
+    path: route.ACADEMIC_SECTION_LIST,
+    element: <SectionList />,
+  },
+  {
+    path: route.ACADEMIC_SECTION_CREATE,
+    element: <SectionForm isEdit={false} />,
+  },
+  {
+    path: route.ACADEMIC_SECTION_EDIT,
+    element: <SectionForm isEdit={true} />,
+  },
+  {
+    path: route.ACADEMIC_SECTION_DETAIL,
+    element: <SectionDetail />,
+  },
+  {
+    path: route.ACADEMIC_CURRICULUM_PLANNER,
+    element: <CurriculumPlanner />,
   },
   // Timetable Management Routes
   {

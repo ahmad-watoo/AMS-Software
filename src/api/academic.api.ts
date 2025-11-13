@@ -125,6 +125,35 @@ export interface CreateSectionDTO {
 }
 
 /**
+ * Curriculum course mapping
+ *
+ * Represents the relationship between a program, course, and semester sequence.
+ */
+export interface CurriculumCourse {
+  id: string;
+  programId: string;
+  courseId: string;
+  semesterNumber: number;
+  isCore: boolean;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  course?: Course;
+}
+
+export interface CurriculumResponse {
+  programId: string;
+  curriculum: CurriculumCourse[];
+}
+
+export interface UpsertCurriculumDTO {
+  courseId: string;
+  semesterNumber: number;
+  isCore: boolean;
+  notes?: string;
+}
+ 
+/**
  * Standard API Response Wrapper
  * 
  * @interface ApiResponse
@@ -568,5 +597,66 @@ export const academicAPI = {
       throw new Error(response.data.error?.message || 'Failed to update section');
     }
     return response.data.data;
+  },
+
+  // ==================== Curriculum ====================
+
+  /**
+   * Fetch curriculum for a specific program
+   */
+  getProgramCurriculum: async (programId: string): Promise<CurriculumResponse> => {
+    const response = await apiClient.get<ApiResponse<CurriculumResponse>>(
+      `/academic/programs/${programId}/curriculum`
+    );
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to fetch curriculum');
+    }
+    return response.data.data;
+  },
+
+  /**
+   * Add course to program curriculum
+   */
+  addCurriculumCourse: async (
+    programId: string,
+    data: UpsertCurriculumDTO
+  ): Promise<CurriculumCourse> => {
+    const response = await apiClient.post<ApiResponse<CurriculumCourse>>(
+      `/academic/programs/${programId}/curriculum`,
+      data
+    );
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to add course to curriculum');
+    }
+    return response.data.data;
+  },
+
+  /**
+   * Update curriculum mapping entry
+   */
+  updateCurriculumCourse: async (
+    curriculumId: string,
+    data: Partial<UpsertCurriculumDTO>
+  ): Promise<CurriculumCourse> => {
+    const response = await apiClient.put<ApiResponse<CurriculumCourse>>(
+      `/academic/curriculum/${curriculumId}`,
+      data
+    );
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to update curriculum course');
+    }
+    return response.data.data;
+  },
+
+  /**
+   * Remove course from program curriculum
+   */
+  deleteCurriculumCourse: async (curriculumId: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(
+      `/academic/curriculum/${curriculumId}`
+    );
+    if (response.data && !response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete curriculum course');
+    }
   },
 };

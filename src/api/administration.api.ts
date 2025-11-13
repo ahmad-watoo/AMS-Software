@@ -404,7 +404,7 @@ const administrationAPI = {
    *   isActive: false
    * });
    */
-  updateEvent: async (id: string, data: Partial<CreateEventDTO>) => {
+  updateEvent: async (id: string, data: Partial<CreateEventDTO & { isActive?: boolean }>) => {
     const response = await apiClient.put<ApiResponse<Event>>(`/administration/events/${id}`, data);
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.error?.message || 'Failed to update event');

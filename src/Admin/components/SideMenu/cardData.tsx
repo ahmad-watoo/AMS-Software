@@ -31,6 +31,7 @@ const iconMap = {
   hrMS: <TeamOutlined />,
   multiCampLMS: <BankOutlined />,
   payrollLMS: <DatabaseOutlined />,
+  academicLMS: <BookOutlined />,
 };
 
 export const sideManueRoutes = [
@@ -41,15 +42,17 @@ export const sideManueRoutes = [
 
     subsections: [
       {
+        sub_name: "Overview",
+        path: route.ADMISSION_OVERVIEW,
+      },
+      {
         sub_name: "Admission Status",
         path: route.ADMISSION_ADMISSION_STATUS,
       },
-
       {
-        sub_name: "Application Forms",
-        path: route.ADMISSION_APLLICATION_FORMS,
+        sub_name: "Applications",
+        path: route.ADMISSION_APPLICATION_LIST,
       },
-
       {
         sub_name: "Eligibility Check",
         path: route.ADMISSION_ELIGIBILITY_CHECK,
@@ -58,6 +61,29 @@ export const sideManueRoutes = [
       {
         sub_name: "Fee Submission",
         path: route.ADMISSION_FEE_SUBMISSION,
+      },
+    ],
+  },
+  {
+    id: 14,
+    icon: iconMap.academicLMS,
+    name: "Academic",
+    subsections: [
+      {
+        sub_name: "Programs",
+        path: route.ACADEMIC_PROGRAM_LIST,
+      },
+      {
+        sub_name: "Courses",
+        path: route.ACADEMIC_COURSE_LIST,
+      },
+      {
+        sub_name: "Sections",
+        path: route.ACADEMIC_SECTION_LIST,
+      },
+      {
+        sub_name: "Curriculum Planner",
+        path: route.ACADEMIC_CURRICULUM_PLANNER,
       },
     ],
   },

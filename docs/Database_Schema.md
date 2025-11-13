@@ -426,6 +426,88 @@ CREATE INDEX idx_attendance_enrollment_date ON attendance_records(enrollment_id,
 CREATE INDEX idx_attendance_date ON attendance_records(attendance_date);
 ```
 
+### 3.5 Student Enrollments
+```sql
+CREATE TABLE student_enrollments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    section_id UUID NOT NULL REFERENCES course_sections(id) ON DELETE CASCADE,
+    enrollment_status VARCHAR(20) DEFAULT 'registered' CHECK (enrollment_status IN ('registered','completed','dropped','waitlisted')),
+    registered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completion_date DATE,
+    grade VARCHAR(5),
+    gpa NUMERIC(3,2),
+    attendance_percentage NUMERIC(5,2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(student_id, section_id)
+);
+
+CREATE INDEX idx_student_enrollments_student ON student_enrollments(student_id);
+CREATE INDEX idx_student_enrollments_section ON student_enrollments(section_id);
+CREATE INDEX idx_student_enrollments_status ON student_enrollments(enrollment_status);
+```
+
+### 3.6 Course Sections
+```sql
+CREATE TABLE course_sections (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    section_code VARCHAR(10) NOT NULL,
+    semester VARCHAR(20) NOT NULL,
+    faculty_id UUID REFERENCES users(id),
+    max_capacity INTEGER DEFAULT 30,
+    current_enrollment INTEGER DEFAULT 0,
+    room_id UUID REFERENCES rooms(id),
+    schedule_id UUID REFERENCES schedules(id),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(course_id, semester, section_code)
+);
+
+CREATE INDEX idx_course_sections_course ON course_sections(course_id);
+CREATE INDEX idx_course_sections_semester ON course_sections(semester);
+```
+
+### 3.7 Curriculum Mapping
+```sql
+CREATE TABLE curriculum_courses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    program_id UUID NOT NULL REFERENCES programs(id) ON DELETE CASCADE,
+    course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    semester_number INTEGER NOT NULL CHECK (semester_number >= 1),
+    is_core BOOLEAN DEFAULT true,
+    is_prerequisite BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(program_id, course_id, semester_number)
+);
+
+CREATE INDEX idx_curriculum_courses_program ON curriculum_courses(program_id, semester_number);
+```
+
+### 3.8 Attendance Reports
+```sql
+CREATE TABLE attendance_reports (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    section_id UUID NOT NULL REFERENCES course_sections(id) ON DELETE CASCADE,
+    attendance_percentage NUMERIC(5,2) NOT NULL,
+    total_classes INTEGER NOT NULL,
+    present_classes INTEGER NOT NULL,
+    absent_classes INTEGER NOT NULL,
+    late_classes INTEGER NOT NULL,
+    excused_classes INTEGER NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('satisfactory','warning','critical')),
+    calculated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(student_id, section_id)
+);
+
+CREATE INDEX idx_attendance_reports_student ON attendance_reports(student_id);
+CREATE INDEX idx_attendance_reports_status ON attendance_reports(status);
+```
+
 ---
 
 ## 4. Financial Tables
@@ -582,6 +664,26 @@ CREATE TABLE notices (
 
 CREATE INDEX idx_notices_active ON notices(is_active, published_at);
 ```
+
+### 5.5 Parent Communications (Planned)
+```sql
+CREATE TABLE student_parent_contacts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    contact_channel VARCHAR(20) NOT NULL CHECK (contact_channel IN ('Phone','Email','SMS','In Person')),
+    notes TEXT NOT NULL,
+    contacted_by UUID NOT NULL REFERENCES users(id),
+    contacted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    follow_up_required BOOLEAN DEFAULT false,
+    follow_up_date DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_parent_contacts_student ON student_parent_contacts(student_id);
+CREATE INDEX idx_parent_contacts_channel ON student_parent_contacts(contact_channel);
+```
+
+> **Note:** UI currently stores parent communications locally. Once the above table and accompanying API endpoint are provisioned, the entries can be persisted to Supabase.
 
 ---
 

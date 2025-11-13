@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Input, Button, Card, message, Select, DatePicker, Space, Spin } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
-import { studentAPI, CreateStudentDTO, UpdateStudentDTO } from '../../../../api/student.api';
-import { Student } from '../../../../api/student.api';
+import { studentAPI, CreateStudentDTO, UpdateStudentDTO, Student } from '../../../../api/student.api';
 import dayjs from 'dayjs';
 import { userAPI } from '../../../../api/user.api';
+import { academicAPI, Program } from '../../../../api/academic.api';
 
 const { Option } = Select;
 
@@ -17,7 +17,8 @@ const StudentForm: React.FC<StudentFormProps> = ({ isEdit = false }) => {
   const [loading, setLoading] = useState(false);
   const [student, setStudent] = useState<Student | null>(null);
   const [users, setUsers] = useState<any[]>([]);
-  const [programs, setPrograms] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [programLoading, setProgramLoading] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
@@ -58,8 +59,17 @@ const StudentForm: React.FC<StudentFormProps> = ({ isEdit = false }) => {
   const loadUsers = async () => {
     try {
       // Load users without student records (for creating new students)
-      const response = await userAPI.getUsers(1, 100);
-      setUsers(response.users);
+      const [usersResponse, studentsResponse] = await Promise.all([
+        userAPI.getUsers(1, 200),
+        studentAPI.getStudents(1, 200),
+      ]);
+      const studentUserIds = new Set(
+        (studentsResponse?.students || []).map((student) => student.userId)
+      );
+      const availableUsers = usersResponse.users.filter(
+        (user) => !studentUserIds.has(user.id)
+      );
+      setUsers(availableUsers);
     } catch (error) {
       console.error('Error loading users:', error);
     }
@@ -67,11 +77,14 @@ const StudentForm: React.FC<StudentFormProps> = ({ isEdit = false }) => {
 
   const loadPrograms = async () => {
     try {
-      // This will be implemented when we create the program API
-      // For now, set empty array
-      setPrograms([]);
+      setProgramLoading(true);
+      const response = await academicAPI.getPrograms(1, 200, { isActive: true });
+      setPrograms(response.programs);
     } catch (error) {
+      message.error('Failed to load programs');
       console.error('Error loading programs:', error);
+    } finally {
+      setProgramLoading(false);
     }
   };
 
@@ -184,7 +197,12 @@ const StudentForm: React.FC<StudentFormProps> = ({ isEdit = false }) => {
           label="Program"
           rules={[{ required: true, message: 'Please select a program' }]}
         >
-          <Select placeholder="Select Program">
+          <Select
+            placeholder="Select Program"
+            loading={programLoading}
+            showSearch
+            optionFilterProp="children"
+          >
             {programs.map((program) => (
               <Option key={program.id} value={program.id}>
                 {program.name} ({program.code})

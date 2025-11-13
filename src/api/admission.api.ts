@@ -76,6 +76,23 @@ export interface CreateApplicationDTO {
 }
 
 /**
+ * Update Application Data Transfer Object
+ *
+ * Matches backend UpdateApplicationDTO. Allows reviewers to adjust statuses,
+ * interview data, remarks, and merit scores.
+ */
+export interface UpdateApplicationDTO {
+  status?: AdmissionApplication['status'];
+  eligibilityStatus?: AdmissionApplication['eligibilityStatus'];
+  eligibilityScore?: number;
+  meritRank?: number;
+  interviewDate?: string;
+  interviewTime?: string;
+  interviewLocation?: string;
+  remarks?: string;
+}
+
+/**
  * Eligibility Check Data Transfer Object
  * 
  * @interface EligibilityCheckDTO
@@ -284,6 +301,28 @@ export const admissionAPI = {
     const response = await apiClient.post<ApiResponse<AdmissionApplication>>('/admission/applications', data);
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.error?.message || 'Failed to create application');
+    }
+    return response.data.data;
+  },
+
+  /**
+   * Update an existing application
+   *
+   * Allows reviewers to adjust application status, eligibility, interview, and merit information.
+   * Requires admission.approve permission.
+   *
+   * @param {string} id - Application ID
+   * @param {UpdateApplicationDTO} data - Fields to update
+   * @returns {Promise<AdmissionApplication>} Updated application
+   * @throws {Error} If request fails or validation fails
+   */
+  updateApplication: async (id: string, data: UpdateApplicationDTO): Promise<AdmissionApplication> => {
+    const response = await apiClient.put<ApiResponse<AdmissionApplication>>(
+      `/admission/applications/${id}`,
+      data
+    );
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to update application');
     }
     return response.data.data;
   },

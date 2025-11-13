@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Space, Card, message, Tag, Popconfirm, Select, Form } from 'antd';
+import { Table, Button, Input, Space, Card, message, Tag, Popconfirm, Select } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined, UserOutlined, EyeOutlined } from '@ant-design/icons';
 import { studentAPI, Student } from '../../../../api/student.api';
 import { useNavigate } from 'react-router-dom';
 import { PermissionGuard } from '../../../common/PermissionGuard';
 import { route } from '@/routes/constant';
+import { academicAPI, Program } from '../../../../api/academic.api';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -21,7 +22,10 @@ const StudentList: React.FC = () => {
   const [filters, setFilters] = useState({
     search: '',
     enrollmentStatus: '',
+    programId: '',
   });
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [programLoading, setProgramLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchStudents = async (page: number = 1, currentFilters?: any) => {
@@ -40,7 +44,21 @@ const StudentList: React.FC = () => {
 
   useEffect(() => {
     fetchStudents(1);
+    loadPrograms();
   }, []);
+
+  const loadPrograms = async () => {
+    try {
+      setProgramLoading(true);
+      const response = await academicAPI.getPrograms(1, 200, { isActive: true });
+      setPrograms(response.programs);
+    } catch (error) {
+      message.error('Failed to load programs');
+      console.error('Error fetching programs:', error);
+    } finally {
+      setProgramLoading(false);
+    }
+  };
 
   const handleSearch = (value: string) => {
     const newFilters = { ...filters, search: value };
@@ -52,6 +70,18 @@ const StudentList: React.FC = () => {
     const newFilters = { ...filters, enrollmentStatus: value };
     setFilters(newFilters);
     fetchStudents(1, newFilters);
+  };
+
+  const handleProgramFilter = (value?: string) => {
+    const newFilters = { ...filters, programId: value || '' };
+    setFilters(newFilters);
+    fetchStudents(1, newFilters);
+  };
+
+  const handleResetFilters = () => {
+    const resetFilters = { search: '', enrollmentStatus: '', programId: '' };
+    setFilters(resetFilters);
+    fetchStudents(1, resetFilters);
   };
 
   const handleDelete = async (id: string) => {
@@ -205,6 +235,7 @@ const StudentList: React.FC = () => {
             allowClear
             style={{ width: 150 }}
             onChange={handleStatusFilter}
+            value={filters.enrollmentStatus || undefined}
           >
             <Option value="active">Active</Option>
             <Option value="graduated">Graduated</Option>
@@ -212,6 +243,23 @@ const StudentList: React.FC = () => {
             <Option value="withdrawn">Withdrawn</Option>
             <Option value="transfer">Transfer</Option>
           </Select>
+          <Select
+            placeholder="Filter by Program"
+            allowClear
+            loading={programLoading}
+            style={{ width: 220 }}
+            value={filters.programId || undefined}
+            onChange={handleProgramFilter}
+            showSearch
+            optionFilterProp="children"
+          >
+            {programs.map((program) => (
+              <Option key={program.id} value={program.id}>
+                {program.name}
+              </Option>
+            ))}
+          </Select>
+          <Button onClick={handleResetFilters}>Reset</Button>
         </Space>
       </Space>
 

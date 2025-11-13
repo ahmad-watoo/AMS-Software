@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Descriptions, Tag, Button, Space, message, Timeline, Divider } from 'antd';
-import { ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { Card, Descriptions, Tag, Button, Space, message, Timeline } from 'antd';
+import { ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { admissionAPI, AdmissionApplication, AdmissionDocument } from '../../../../api/admission.api';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PermissionGuard } from '../../../common/PermissionGuard';
+import ApplicationReviewDrawer from './ApplicationReviewDrawer';
 
 const ApplicationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,7 @@ const ApplicationDetail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [application, setApplication] = useState<AdmissionApplication | null>(null);
   const [documents, setDocuments] = useState<AdmissionDocument[]>([]);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -82,9 +84,19 @@ const ApplicationDetail: React.FC = () => {
       <Card
         title="Application Details"
         extra={
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-            Back
-          </Button>
+          <Space>
+            <PermissionGuard permission="admission" action="approve">
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => setReviewOpen(true)}
+              >
+                Review
+              </Button>
+            </PermissionGuard>
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+              Back
+            </Button>
+          </Space>
         }
         style={{ marginBottom: 20, boxShadow: 'rgba(0, 0, 0, 0.16) 0px 1px 4px' }}
       >
@@ -197,6 +209,15 @@ const ApplicationDetail: React.FC = () => {
           </Descriptions>
         )}
       </Card>
+      <ApplicationReviewDrawer
+        open={reviewOpen}
+        application={application}
+        onClose={() => setReviewOpen(false)}
+        onUpdated={(updated) => {
+          setApplication(updated);
+          setReviewOpen(false);
+        }}
+      />
     </div>
   );
 };

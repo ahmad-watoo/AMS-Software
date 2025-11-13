@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Space, Card, message, Tag, Select, Tooltip } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, EyeOutlined, BookOutlined } from '@ant-design/icons';
+import {
+  Table,
+  Button,
+  Input,
+  Space,
+  Card,
+  message,
+  Tag,
+  Select,
+  Tooltip,
+  Row,
+  Col,
+  Statistic,
+} from 'antd';
+import { SearchOutlined, PlusOutlined, EditOutlined, EyeOutlined, BookOutlined, ReloadOutlined } from '@ant-design/icons';
 import { academicAPI, Course } from '../../../../api/academic.api';
 import { useNavigate } from 'react-router-dom';
 import { PermissionGuard } from '../../../common/PermissionGuard';
@@ -33,7 +46,6 @@ const CourseList: React.FC = () => {
       setPagination(response.pagination);
     } catch (error: any) {
       message.error(error.message || 'Failed to load courses');
-      console.error('Error fetching courses:', error);
     } finally {
       setLoading(false);
     }
@@ -71,6 +83,13 @@ const CourseList: React.FC = () => {
     fetchCourses(page, filters);
   };
 
+  const summary = {
+    total: pagination.total,
+    active: courses.filter((course) => course.isActive).length,
+    core: courses.filter((course) => !course.isElective).length,
+    labHeavy: courses.filter((course) => course.labHours > 0).length,
+  };
+
   const columns = [
     {
       title: 'Course Code',
@@ -93,10 +112,10 @@ const CourseList: React.FC = () => {
       dataIndex: 'creditHours',
       key: 'creditHours',
       render: (hours: number, record: Course) => (
-        <Space>
-          <Tag>{hours} CH</Tag>
-          {record.theoryHours > 0 && <span>T: {record.theoryHours}</span>}
-          {record.labHours > 0 && <span>L: {record.labHours}</span>}
+        <Space size="small">
+          <Tag color="blue">{hours} CH</Tag>
+          {record.theoryHours > 0 && <Tag>Theory {record.theoryHours}</Tag>}
+          {record.labHours > 0 && <Tag color="purple">Lab {record.labHours}</Tag>}
         </Space>
       ),
     },
@@ -160,8 +179,16 @@ const CourseList: React.FC = () => {
 
   return (
     <Card
-      title="Course Catalog"
-      style={{ margin: 20, boxShadow: 'rgba(0, 0, 0, 0.16) 0px 1px 4px' }}
+      style={{ margin: 24, borderRadius: 16 }}
+      bodyStyle={{ padding: 24 }}
+      title={
+        <Space size="large">
+          <span style={{ fontSize: 20, fontWeight: 600 }}>Course Catalog</span>
+          <Button icon={<ReloadOutlined />} onClick={() => fetchCourses(pagination.page, filters)}>
+            Refresh
+          </Button>
+        </Space>
+      }
       extra={
         <PermissionGuard permission="academic" action="create">
           <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(route.ACADEMIC_COURSE_CREATE)}>
@@ -171,34 +198,61 @@ const CourseList: React.FC = () => {
       }
     >
       <Space direction="vertical" style={{ width: '100%' }} size="large">
-        <Space>
-          <Search
-            placeholder="Search by code or title..."
-            allowClear
-            enterButton={<SearchOutlined />}
-            size="large"
-            onSearch={handleSearch}
-            style={{ width: 300 }}
-          />
-          <Select
-            placeholder="Filter by Type"
-            allowClear
-            style={{ width: 150 }}
-            onChange={handleElectiveFilter}
-          >
-            <Option value="false">Core</Option>
-            <Option value="true">Elective</Option>
-          </Select>
-          <Select
-            placeholder="Filter by Status"
-            allowClear
-            style={{ width: 150 }}
-            onChange={handleStatusFilter}
-          >
-            <Option value="true">Active</Option>
-            <Option value="false">Inactive</Option>
-          </Select>
-        </Space>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={6}>
+            <Card bordered={false} style={{ background: '#f0f5ff' }}>
+              <Statistic title="Total Courses" value={summary.total} />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card bordered={false} style={{ background: '#f6ffed' }}>
+              <Statistic title="Active" value={summary.active} />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card bordered={false} style={{ background: '#fffbe6' }}>
+              <Statistic title="Core Courses" value={summary.core} />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card bordered={false} style={{ background: '#fff0f6' }}>
+              <Statistic title="Lab Components" value={summary.labHeavy} />
+            </Card>
+          </Col>
+        </Row>
+
+        <Card bordered={false} style={{ borderRadius: 12, background: '#fafafa' }}>
+          <Space wrap style={{ width: '100%' }}>
+            <Search
+              placeholder="Search by code or title..."
+              allowClear
+              enterButton={<SearchOutlined />}
+              size="large"
+              onSearch={handleSearch}
+              style={{ width: 280 }}
+            />
+            <Select
+              placeholder="Filter by Type"
+              allowClear
+              size="large"
+              style={{ width: 200 }}
+              onChange={handleElectiveFilter}
+            >
+              <Option value="false">Core</Option>
+              <Option value="true">Elective</Option>
+            </Select>
+            <Select
+              placeholder="Filter by Status"
+              allowClear
+              size="large"
+              style={{ width: 200 }}
+              onChange={handleStatusFilter}
+            >
+              <Option value="true">Active</Option>
+              <Option value="false">Inactive</Option>
+            </Select>
+          </Space>
+        </Card>
 
         <Table
           columns={columns}

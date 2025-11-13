@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Input, Space, Card, message, Tag, Select, Tooltip } from 'antd';
-import { SearchOutlined, EyeOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, EyeOutlined, FileTextOutlined, CheckCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { admissionAPI, AdmissionApplication } from '../../../../api/admission.api';
 import { useNavigate } from 'react-router-dom';
 import { PermissionGuard } from '../../../common/PermissionGuard';
 import { route } from '../../../routes/constant';
+import { academicAPI, Program } from '../../../../api/academic.api';
+import ApplicationReviewDrawer from './ApplicationReviewDrawer';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -23,6 +25,10 @@ const ApplicationList: React.FC = () => {
     status: '',
     programId: '',
   });
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [programLoading, setProgramLoading] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<AdmissionApplication | null>(null);
   const navigate = useNavigate();
 
   const fetchApplications = async (page: number = 1, currentFilters?: any) => {
@@ -41,7 +47,20 @@ const ApplicationList: React.FC = () => {
 
   useEffect(() => {
     fetchApplications(1);
+    loadPrograms();
   }, []);
+
+  const loadPrograms = async () => {
+    try {
+      setProgramLoading(true);
+      const response = await academicAPI.getPrograms(1, 100, { isActive: true });
+      setPrograms(response.programs);
+    } catch (error: any) {
+      message.error(error.message || 'Failed to load programs');
+    } finally {
+      setProgramLoading(false);
+    }
+  };
 
   const handleSearch = (value: string) => {
     const newFilters = { ...filters, search: value };
@@ -49,14 +68,26 @@ const ApplicationList: React.FC = () => {
     fetchApplications(1, newFilters);
   };
 
-  const handleStatusFilter = (value: string) => {
-    const newFilters = { ...filters, status: value };
+  const handleStatusFilter = (value?: string) => {
+    const newFilters = { ...filters, status: value || '' };
+    setFilters(newFilters);
+    fetchApplications(1, newFilters);
+  };
+
+  const handleProgramFilter = (value?: string) => {
+    const newFilters = { ...filters, programId: value || '' };
     setFilters(newFilters);
     fetchApplications(1, newFilters);
   };
 
   const handleTableChange = (page: number) => {
     fetchApplications(page, filters);
+  };
+
+  const handleResetFilters = () => {
+    const resetFilters = { search: '', status: '', programId: '' };
+    setFilters(resetFilters);
+    fetchApplications(1, resetFilters);
   };
 
   const getStatusColor = (status: string) => {
@@ -158,6 +189,16 @@ const ApplicationList: React.FC = () => {
                 onClick={() => navigate(`${route.ADMISSION_ELIGIBILITY_CHECK}?applicationId=${record.id}`)}
               />
             </Tooltip>
+            <Tooltip title="Review / Update Application">
+              <Button
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setSelectedApplication(record);
+                  setReviewOpen(true);
+                }}
+              />
+            </Tooltip>
           </PermissionGuard>
         </Space>
       ),
@@ -190,7 +231,8 @@ const ApplicationList: React.FC = () => {
             placeholder="Filter by Status"
             allowClear
             style={{ width: 200 }}
-            onChange={handleStatusFilter}
+            value={filters.status || undefined}
+            onChange={(value) => handleStatusFilter(value)}
           >
             <Option value="submitted">Submitted</Option>
             <Option value="under_review">Under Review</Option>
@@ -199,6 +241,21 @@ const ApplicationList: React.FC = () => {
             <Option value="waitlisted">Waitlisted</Option>
             <Option value="rejected">Rejected</Option>
           </Select>
+          <Select
+            placeholder="Filter by Program"
+            allowClear
+            loading={programLoading}
+            style={{ width: 240 }}
+            value={filters.programId || undefined}
+            onChange={(value) => handleProgramFilter(value)}
+          >
+            {programs.map((program) => (
+              <Option key={program.id} value={program.id}>
+                {program.name}
+              </Option>
+            ))}
+          </Select>
+          <Button onClick={handleResetFilters}>Reset</Button>
         </Space>
 
         <Table
@@ -216,6 +273,17 @@ const ApplicationList: React.FC = () => {
           }}
         />
       </Space>
+      <ApplicationReviewDrawer
+        open={reviewOpen}
+        application={selectedApplication}
+        onClose={() => {
+          setReviewOpen(false);
+          setSelectedApplication(null);
+        }}
+        onUpdated={() => {
+          fetchApplications(pagination.page);
+        }}
+      />
     </Card>
   );
 };

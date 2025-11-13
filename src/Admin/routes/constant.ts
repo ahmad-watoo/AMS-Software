@@ -4,12 +4,10 @@ export const route = {
   // APP_MENU: "/app_menu",
   // MENU_DASHBOARD: "/menu_dashboard",
   // Module wise route constant list
-  // 1: Admission
-  // ADMISSION_APLLICATION_FORMS: "/admission/applicationforms",
   // Dashboard
   DASHBOARD: "/dashboard",
-  ADMISSION_APLLICATION_FORMS: "/",
-
+  // 1: Admission
+  ADMISSION_OVERVIEW: "/admission",
   ADMISSION_ADMISSION_STATUS: "/admission/admissionstatus",
   ADMISSION_ELIGIBILITY_CHECK: "/admission/eligibilitycheck",
   ADMISSION_FEE_SUBMISSION: "/admission/feesubmission",
@@ -105,6 +103,11 @@ export const route = {
   ACADEMIC_COURSE_CREATE: "/academic/courses/new",
   ACADEMIC_COURSE_EDIT: "/academic/courses/:id/edit",
   ACADEMIC_COURSE_DETAIL: "/academic/courses/:id",
+  ACADEMIC_SECTION_LIST: "/academic/sections",
+  ACADEMIC_SECTION_CREATE: "/academic/sections/new",
+  ACADEMIC_SECTION_EDIT: "/academic/sections/:id/edit",
+  ACADEMIC_SECTION_DETAIL: "/academic/sections/:id",
+  ACADEMIC_CURRICULUM_PLANNER: "/academic/curriculum",
   // Timetable Management
   TIMETABLE_LIST: "/timetable/schedules",
   TIMETABLE_CREATE: "/timetable/schedules/new",

@@ -32,9 +32,23 @@ export interface Exam {
   passingMarks: number;
   location?: string;
   instructions?: string;
+  roomId?: string;
+  questionPaperUrl?: string;
+  answerKeyUrl?: string;
+  secureAccessEnabled?: boolean;
   status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ExamsResponse {
+  exams: Exam[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 /**
@@ -78,6 +92,8 @@ export interface CreateExamDTO {
   passingMarks: number;
   location?: string;
   instructions?: string;
+  roomId?: string;
+  questionPaperUrl?: string;
 }
 
 /**
@@ -112,6 +128,60 @@ export interface ReEvaluationRequestDTO {
   resultId: string;
   reason: string;
   requestedBy: string;
+}
+
+export interface ReEvaluation {
+  id: string;
+  resultId: string;
+  reason: string;
+  status: 'pending' | 'under_review' | 'approved' | 'rejected';
+  requestedBy: string;
+  remarks?: string;
+  decisionRemarks?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReEvaluationResponse {
+  reEvaluations: ReEvaluation[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface QuestionPaper {
+  id: string;
+  examId: string;
+  version: string;
+  notes?: string;
+  isActive: boolean;
+  fileUrl: string;
+  secureToken?: string;
+  secureUntil?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateQuestionPaperDTO {
+  examId: string;
+  version: string;
+  notes?: string;
+  isActive?: boolean;
+  secureUntil?: string;
+  fileName: string;
+  fileBase64: string;
+}
+
+export interface UpdateQuestionPaperDTO {
+  version?: string;
+  notes?: string;
+  isActive?: boolean;
+  secureUntil?: string;
+  fileName?: string;
+  fileBase64?: string;
 }
 
 /**
@@ -168,7 +238,8 @@ const examinationAPI = {
     status?: string;
     page?: number;
     limit?: number;
-  }) => {
+    search?: string;
+  }): Promise<ExamsResponse> => {
     const response = await apiClient.get<ApiResponse<any>>('/examination/exams', { params });
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.error?.message || 'Failed to fetch exams');
@@ -456,7 +527,7 @@ const examinationAPI = {
     status?: string;
     page?: number;
     limit?: number;
-  }) => {
+  }): Promise<ReEvaluationResponse> => {
     const response = await apiClient.get<ApiResponse<any>>('/examination/re-evaluations', { params });
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.error?.message || 'Failed to fetch re-evaluations');
@@ -486,6 +557,52 @@ const examinationAPI = {
     });
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.error?.message || 'Failed to process re-evaluation');
+    }
+    return response.data.data;
+  },
+
+  // ==================== Question Papers ====================
+
+  getQuestionPapers: async (params?: { examId?: string; page?: number; limit?: number }): Promise<{
+    questionPapers: QuestionPaper[];
+    pagination?: { page: number; limit: number; total: number; totalPages: number };
+  }> => {
+    const response = await apiClient.get<ApiResponse<any>>('/examination/question-papers', { params });
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to fetch question papers');
+    }
+    return response.data.data;
+  },
+
+  uploadQuestionPaper: async (data: CreateQuestionPaperDTO): Promise<QuestionPaper> => {
+    const response = await apiClient.post<ApiResponse<QuestionPaper>>('/examination/question-papers', data);
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to upload question paper');
+    }
+    return response.data.data;
+  },
+
+  updateQuestionPaper: async (id: string, data: UpdateQuestionPaperDTO): Promise<QuestionPaper> => {
+    const response = await apiClient.put<ApiResponse<QuestionPaper>>(`/examination/question-papers/${id}`, data);
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to update question paper');
+    }
+    return response.data.data;
+  },
+
+  deleteQuestionPaper: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<void>>(`/examination/question-papers/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete question paper');
+    }
+  },
+
+  generateQuestionPaperLink: async (id: string): Promise<{ signedUrl: string }> => {
+    const response = await apiClient.post<ApiResponse<{ signedUrl: string }>>(
+      `/examination/question-papers/${id}/link`
+    );
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to generate secure link');
     }
     return response.data.data;
   },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, message, Space, Select, InputNumber } from 'antd';
+import { Form, Input, Button, Card, message, Space, Select, InputNumber, Switch, Typography, Divider, Skeleton, Row, Col } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { academicAPI, CreateProgramDTO, Program } from '../../../../api/academic.api';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -7,9 +7,15 @@ import { route } from '../../../routes/constant';
 
 const { Option } = Select;
 const { TextArea } = Input;
+const { Title, Paragraph } = Typography;
 
 interface ProgramFormProps {
   isEdit?: boolean;
+}
+
+interface DepartmentOption {
+  id: string;
+  name: string;
 }
 
 const ProgramForm: React.FC<ProgramFormProps> = ({ isEdit = false }) => {
@@ -17,12 +23,32 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ isEdit = false }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(false);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
 
   useEffect(() => {
+    loadDepartments();
     if (isEdit && id) {
       loadProgram(id);
     }
   }, [id, isEdit]);
+
+  const loadDepartments = async () => {
+    try {
+      const response = await academicAPI.getPrograms(1, 1); // placeholder to reuse API client; ideally replace with dedicated departments API when available
+      const uniqueDepartments = new Map<string, DepartmentOption>();
+      (response.programs || []).forEach((program) => {
+        if (program.departmentId && program.departmentId.length > 0 && program.departmentId !== 'unknown') {
+          uniqueDepartments.set(program.departmentId, {
+            id: program.departmentId,
+            name: program.departmentId,
+          });
+        }
+      });
+      setDepartments(Array.from(uniqueDepartments.values()));
+    } catch (error) {
+      console.warn('Failed to load departments; using manual entry');
+    }
+  };
 
   const loadProgram = async (programId: string) => {
     try {
@@ -48,7 +74,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ isEdit = false }) => {
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
-      
+
       if (isEdit && id) {
         await academicAPI.updateProgram(id, values);
         message.success('Program updated successfully');
@@ -65,7 +91,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ isEdit = false }) => {
         await academicAPI.createProgram(programData);
         message.success('Program created successfully');
       }
-      
+
       navigate(route.ACADEMIC_PROGRAM_LIST);
     } catch (error: any) {
       message.error(error.message || 'Failed to save program');
@@ -75,124 +101,168 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ isEdit = false }) => {
   };
 
   return (
-    <Card
-      title={isEdit ? 'Edit Program' : 'New Academic Program'}
-      style={{ margin: 20, boxShadow: 'rgba(0, 0, 0, 0.16) 0px 1px 4px' }}
-      extra={
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-          Back
-        </Button>
-      }
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        initialValues={{
-          degreeLevel: 'undergraduate',
-          duration: 4,
-          totalCreditHours: 130,
-        }}
+    <div style={{ padding: 24 }}>
+      <Card
+        style={{ maxWidth: 960, margin: '0 auto', borderRadius: 16 }}
+        bodyStyle={{ padding: 32 }}
       >
-        <Form.Item
-          name="code"
-          label="Program Code"
-          rules={[
-            { required: true, message: 'Please enter program code' },
-            { pattern: /^[A-Z0-9-]+$/, message: 'Code should contain only uppercase letters, numbers, and hyphens' },
-          ]}
-        >
-          <Input placeholder="e.g., BS-CS, MS-IT" disabled={isEdit} />
-        </Form.Item>
-
-        <Form.Item
-          name="name"
-          label="Program Name"
-          rules={[{ required: true, message: 'Please enter program name' }]}
-        >
-          <Input placeholder="Bachelor of Science in Computer Science" />
-        </Form.Item>
-
-        <Form.Item
-          name="degreeLevel"
-          label="Degree Level"
-          rules={[{ required: true, message: 'Please select degree level' }]}
-        >
-          <Select placeholder="Select Degree Level">
-            <Option value="undergraduate">Undergraduate</Option>
-            <Option value="graduate">Graduate</Option>
-            <Option value="doctoral">Doctoral</Option>
-          </Select>
-        </Form.Item>
-
-        <Space style={{ width: '100%' }} direction="horizontal">
-          <Form.Item
-            name="duration"
-            label="Duration (Years)"
-            rules={[
-              { required: true, message: 'Please enter duration' },
-              { type: 'number', min: 1, max: 10, message: 'Duration must be between 1 and 10 years' },
-            ]}
-            style={{ flex: 1 }}
-          >
-            <InputNumber min={1} max={10} style={{ width: '100%' }} placeholder="4" />
-          </Form.Item>
-
-          <Form.Item
-            name="totalCreditHours"
-            label="Total Credit Hours"
-            rules={[
-              { required: true, message: 'Please enter total credit hours' },
-              { type: 'number', min: 1, message: 'Credit hours must be greater than 0' },
-            ]}
-            style={{ flex: 1 }}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="130" />
-          </Form.Item>
-        </Space>
-
-        <Form.Item
-          name="departmentId"
-          label="Department (Optional)"
-        >
-          <Select placeholder="Select Department" allowClear>
-            {/* Departments would come from API */}
-            <Option value="dept1">Computer Science</Option>
-            <Option value="dept2">Information Technology</Option>
-            <Option value="dept3">Software Engineering</Option>
-          </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="description"
-          label="Description (Optional)"
-        >
-          <TextArea rows={4} placeholder="Program description..." />
-        </Form.Item>
-
-        {isEdit && (
-          <Form.Item
-            name="isActive"
-            label="Status"
-            valuePropName="checked"
-          >
-            <Select>
-              <Option value={true}>Active</Option>
-              <Option value={false}>Inactive</Option>
-            </Select>
-          </Form.Item>
-        )}
-
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />}>
-              {isEdit ? 'Update Program' : 'Create Program'}
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Space align="baseline" style={{ justifyContent: 'space-between', width: '100%' }}>
+            <div>
+              <Title level={3} style={{ marginBottom: 4 }}>
+                {isEdit ? 'Edit Academic Program' : 'Create Academic Program'}
+              </Title>
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                Define program structure, credit requirements, and publication status for your institution.
+              </Paragraph>
+            </div>
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+              Back
             </Button>
-            <Button onClick={() => navigate(-1)}>Cancel</Button>
           </Space>
-        </Form.Item>
-      </Form>
-    </Card>
+
+          <Divider style={{ margin: '12px 0' }} />
+
+          {loading && isEdit ? (
+            <Skeleton active paragraph={{ rows: 6 }} />
+          ) : (
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+              initialValues={{
+                degreeLevel: 'undergraduate',
+                duration: 4,
+                totalCreditHours: 130,
+              }}
+              style={{ width: '100%' }}
+            >
+              <Row gutter={24}>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    name="code"
+                    label="Program Code"
+                    rules={[
+                      { required: true, message: 'Please enter program code' },
+                      {
+                        pattern: /^[A-Z0-9-]+$/,
+                        message: 'Use uppercase letters, numbers, and hyphens only',
+                      },
+                    ]}
+                  >
+                    <Input placeholder="e.g., BS-CS, MS-IT" disabled={isEdit} size="large" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    name="name"
+                    label="Program Name"
+                    rules={[{ required: true, message: 'Please enter program name' }]}
+                  >
+                    <Input placeholder="Bachelor of Science in Computer Science" size="large" />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={24}>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    name="degreeLevel"
+                    label="Degree Level"
+                    rules={[{ required: true, message: 'Please select degree level' }]}
+                  >
+                    <Select placeholder="Select degree level" size="large">
+                      <Option value="undergraduate">Undergraduate</Option>
+                      <Option value="graduate">Graduate</Option>
+                      <Option value="doctoral">Doctoral</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={6}>
+                  <Form.Item
+                    name="duration"
+                    label="Duration (Years)"
+                    rules={[
+                      { required: true, message: 'Please enter duration' },
+                      { type: 'number', min: 1, max: 10, message: 'Must be between 1 and 10 years' },
+                    ]}
+                  >
+                    <InputNumber min={1} max={10} style={{ width: '100%' }} size="large" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={6}>
+                  <Form.Item
+                    name="totalCreditHours"
+                    label="Total Credit Hours"
+                    rules={[
+                      { required: true, message: 'Please enter total credit hours' },
+                      { type: 'number', min: 1, message: 'Must be greater than 0' },
+                    ]}
+                  >
+                    <InputNumber min={1} style={{ width: '100%' }} size="large" />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={24}>
+                <Col xs={24} md={12}>
+                  <Form.Item name="departmentId" label="Department">
+                    <Select
+                      placeholder="Select Department"
+                      allowClear
+                      size="large"
+                      showSearch
+                      optionFilterProp="children"
+                    >
+                      {departments.length === 0 ? (
+                        <Option value="engineering">Engineering</Option>
+                      ) : (
+                        departments.map((department) => (
+                          <Option key={department.id} value={department.id}>
+                            {department.name}
+                          </Option>
+                        ))
+                      )}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={12}>
+                  {isEdit && (
+                    <Form.Item name="isActive" label="Status">
+                      <Select size="large">
+                        <Option value={true}>Active</Option>
+                        <Option value={false}>Inactive</Option>
+                      </Select>
+                    </Form.Item>
+                  )}
+                </Col>
+              </Row>
+
+              <Form.Item name="description" label="Program Description">
+                <TextArea rows={4} placeholder="Program overview, learning outcomes, accreditation notes..." />
+              </Form.Item>
+
+              <Divider style={{ margin: '12px 0' }} />
+
+              <Space>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  icon={<SaveOutlined />}
+                  size="large"
+                >
+                  {isEdit ? 'Update Program' : 'Create Program'}
+                </Button>
+                <Button size="large" onClick={() => navigate(-1)}>
+                  Cancel
+                </Button>
+              </Space>
+            </Form>
+          )}
+        </Space>
+      </Card>
+    </div>
   );
 };
 

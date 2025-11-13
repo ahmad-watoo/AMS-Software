@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Space, Card, message, Tag, Select, Tooltip } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, EyeOutlined, BookOutlined } from '@ant-design/icons';
+import { Table, Button, Input, Space, Card, message, Tag, Select, Tooltip, Row, Col, Statistic, Divider } from 'antd';
+import { SearchOutlined, PlusOutlined, EditOutlined, EyeOutlined, BookOutlined, ReloadOutlined } from '@ant-design/icons';
 import { academicAPI, Program } from '../../../../api/academic.api';
 import { useNavigate } from 'react-router-dom';
 import { PermissionGuard } from '../../../common/PermissionGuard';
@@ -81,6 +81,13 @@ const ProgramList: React.FC = () => {
     return level.charAt(0).toUpperCase() + level.slice(1);
   };
 
+  const summary = {
+    total: pagination.total,
+    active: programs.filter(program => program.isActive).length,
+    graduate: programs.filter(program => program.degreeLevel === 'graduate').length,
+    doctoral: programs.filter(program => program.degreeLevel === 'doctoral').length,
+  };
+
   const columns = [
     {
       title: 'Code',
@@ -156,8 +163,16 @@ const ProgramList: React.FC = () => {
 
   return (
     <Card
-      title="Academic Programs"
-      style={{ margin: 20, boxShadow: 'rgba(0, 0, 0, 0.16) 0px 1px 4px' }}
+      style={{ margin: 24, borderRadius: 16 }}
+      bodyStyle={{ padding: 24 }}
+      title={
+        <Space size="large">
+          <span style={{ fontSize: 20, fontWeight: 600 }}>Academic Programs</span>
+          <Button icon={<ReloadOutlined />} onClick={() => fetchPrograms(pagination.page, filters)}>
+            Refresh
+          </Button>
+        </Space>
+      }
       extra={
         <PermissionGuard permission="academic" action="create">
           <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(route.ACADEMIC_PROGRAM_CREATE)}>
@@ -167,35 +182,62 @@ const ProgramList: React.FC = () => {
       }
     >
       <Space direction="vertical" style={{ width: '100%' }} size="large">
-        <Space>
-          <Search
-            placeholder="Search by code or name..."
-            allowClear
-            enterButton={<SearchOutlined />}
-            size="large"
-            onSearch={handleSearch}
-            style={{ width: 300 }}
-          />
-          <Select
-            placeholder="Filter by Degree Level"
-            allowClear
-            style={{ width: 180 }}
-            onChange={handleDegreeLevelFilter}
-          >
-            <Option value="undergraduate">Undergraduate</Option>
-            <Option value="graduate">Graduate</Option>
-            <Option value="doctoral">Doctoral</Option>
-          </Select>
-          <Select
-            placeholder="Filter by Status"
-            allowClear
-            style={{ width: 150 }}
-            onChange={handleStatusFilter}
-          >
-            <Option value="true">Active</Option>
-            <Option value="false">Inactive</Option>
-          </Select>
-        </Space>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={6}>
+            <Card bordered={false} style={{ background: '#f6ffed' }}>
+              <Statistic title="Total Programs" value={summary.total} />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card bordered={false} style={{ background: '#f0f5ff' }}>
+              <Statistic title="Active Programs" value={summary.active} />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card bordered={false} style={{ background: '#fff7e6' }}>
+              <Statistic title="Graduate Programs" value={summary.graduate} />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card bordered={false} style={{ background: '#fff1f0' }}>
+              <Statistic title="Doctoral Programs" value={summary.doctoral} />
+            </Card>
+          </Col>
+        </Row>
+
+        <Card bordered={false} style={{ borderRadius: 12, background: '#fafafa' }}>
+          <Space wrap style={{ width: '100%' }}>
+            <Search
+              placeholder="Search by code or name..."
+              allowClear
+              enterButton={<SearchOutlined />}
+              size="large"
+              onSearch={handleSearch}
+              style={{ width: 280 }}
+            />
+            <Select
+              placeholder="Degree Level"
+              allowClear
+              size="large"
+              style={{ width: 200 }}
+              onChange={handleDegreeLevelFilter}
+            >
+              <Option value="undergraduate">Undergraduate</Option>
+              <Option value="graduate">Graduate</Option>
+              <Option value="doctoral">Doctoral</Option>
+            </Select>
+            <Select
+              placeholder="Status"
+              allowClear
+              size="large"
+              style={{ width: 200 }}
+              onChange={handleStatusFilter}
+            >
+              <Option value="true">Active</Option>
+              <Option value="false">Inactive</Option>
+            </Select>
+          </Space>
+        </Card>
 
         <Table
           columns={columns}
