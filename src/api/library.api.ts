@@ -495,6 +495,26 @@ const libraryAPI = {
     }
     return response.data.data;
   },
+
+  /**
+   * Delete a book
+   * 
+   * Deletes a book from the library catalog.
+   * Requires library.delete permission.
+   * 
+   * @param {string} id - Book ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or book not found
+   * 
+   * @example
+   * await libraryAPI.deleteBook('book123');
+   */
+  deleteBook: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/library/books/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete book');
+    }
+  },
 };
 
 export default libraryAPI;

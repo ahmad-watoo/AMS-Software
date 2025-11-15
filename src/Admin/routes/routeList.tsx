@@ -105,7 +105,7 @@ const FinancialReports = lazy(
   () => import("../components/module/financeLMS/Subsections/FinancialReports")
 );
 //Learning
-const Assignment = lazy(
+const AssignmentManagement = lazy(
   () => import("../components/module/LearningLMS/Subsections/Assignment")
 );
 const CourseMaterials = lazy(
@@ -576,7 +576,7 @@ export const protectedRoutes: RouteObject[] = [
 
   {
     path: route.LEARNING_ASSIGNMENTS,
-    element: <Assignment />,
+    element: <AssignmentManagement />,
   },
 
   {

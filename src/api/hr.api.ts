@@ -622,6 +622,40 @@ const hrAPI = {
     }
     return response.data.data;
   },
+
+  /**
+   * Delete an employee
+   * 
+   * Deletes an employee record.
+   * Requires hr.delete permission.
+   * 
+   * @param {string} id - Employee ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or employee not found
+   */
+  deleteEmployee: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/hr/employees/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete employee');
+    }
+  },
+
+  /**
+   * Delete a job posting
+   * 
+   * Deletes a job posting.
+   * Requires hr.delete permission.
+   * 
+   * @param {string} id - Job posting ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or job posting not found
+   */
+  deleteJobPosting: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/hr/job-postings/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete job posting');
+    }
+  },
 };
 
 export default hrAPI;

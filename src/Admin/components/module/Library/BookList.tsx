@@ -61,7 +61,7 @@ const BookList: React.FC = () => {
       cancelText: 'Cancel',
       onOk: async () => {
         try {
-          // Delete API call would go here
+          await libraryAPI.deleteBook(id);
           message.success('Book deleted successfully');
           fetchBooks();
         } catch (error: any) {

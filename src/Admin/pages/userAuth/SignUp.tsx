@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Avatar, Button, Form, Input, message, Select, DatePicker } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../../contexts/AuthContext";
@@ -22,7 +22,14 @@ interface SignUpFormValues {
 const SignUp: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { register, clearError } = useAuthContext();
+  const { register, clearError, isAuthenticated, isLoading } = useAuthContext();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const onFinish = async (values: SignUpFormValues) => {
     try {

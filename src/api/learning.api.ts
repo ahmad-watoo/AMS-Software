@@ -554,6 +554,40 @@ const learningAPI = {
     }
     return response.data.data;
   },
+
+  /**
+   * Delete an assignment
+   * 
+   * Deletes an assignment from the system.
+   * Requires learning.delete permission.
+   * 
+   * @param {string} id - Assignment ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or assignment not found
+   */
+  deleteAssignment: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/learning/assignments/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete assignment');
+    }
+  },
+
+  /**
+   * Delete a course material
+   * 
+   * Deletes a course material from the system.
+   * Requires learning.delete permission.
+   * 
+   * @param {string} id - Course material ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or material not found
+   */
+  deleteCourseMaterial: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/learning/materials/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete course material');
+    }
+  },
 };
 
 export default learningAPI;

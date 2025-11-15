@@ -118,7 +118,7 @@ const dashboardAPI = {
    * console.log(`Upcoming exams: ${stats.upcomingExams}`);
    */
   getStats: async (): Promise<DashboardStats> => {
-    const response = await client.get<ApiResponse<DashboardStats>>('/api/dashboard/stats');
+    const response = await client.get<ApiResponse<DashboardStats>>('/dashboard/stats');
     return response.data.data;
   },
 
@@ -139,7 +139,7 @@ const dashboardAPI = {
    */
   getRecentActivities: async (limit: number = 10): Promise<RecentActivity[]> => {
     const response = await client.get<ApiResponse<RecentActivity[]>>(
-      `/api/dashboard/activities?limit=${limit}`
+      `/dashboard/activities?limit=${limit}`
     );
     return response.data.data;
   },
@@ -161,7 +161,7 @@ const dashboardAPI = {
    */
   getUpcomingEvents: async (limit: number = 10): Promise<UpcomingEvent[]> => {
     const response = await client.get<ApiResponse<UpcomingEvent[]>>(
-      `/api/dashboard/events?limit=${limit}`
+      `/dashboard/events?limit=${limit}`
     );
     return response.data.data;
   },

@@ -659,4 +659,79 @@ export const academicAPI = {
       throw new Error(response.data.error?.message || 'Failed to delete curriculum course');
     }
   },
+
+  // ==================== Enrollments ====================
+
+  /**
+   * Get enrollments by section ID
+   * 
+   * Retrieves all student enrollments for a specific course section.
+   * 
+   * @param {string} sectionId - Section ID
+   * @returns {Promise<any[]>} Array of enrollments with student details
+   * @throws {Error} If request fails
+   * 
+   * @example
+   * const enrollments = await academicAPI.getEnrollmentsBySection('section123');
+   */
+  getEnrollmentsBySection: async (sectionId: string): Promise<any[]> => {
+    const response = await apiClient.get<ApiResponse<any[]>>(
+      `/academic/sections/${sectionId}/enrollments`
+    );
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to fetch enrollments');
+    }
+    return response.data.data;
+  },
+
+  /**
+   * Delete a program
+   * 
+   * Deletes a program from the system.
+   * Requires academic.delete permission.
+   * 
+   * @param {string} id - Program ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or program not found
+   */
+  deleteProgram: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/academic/programs/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete program');
+    }
+  },
+
+  /**
+   * Delete a course
+   * 
+   * Deletes a course from the system.
+   * Requires academic.delete permission.
+   * 
+   * @param {string} id - Course ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or course not found
+   */
+  deleteCourse: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/academic/courses/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete course');
+    }
+  },
+
+  /**
+   * Delete a section
+   * 
+   * Deletes a course section from the system.
+   * Requires academic.delete permission.
+   * 
+   * @param {string} id - Section ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or section not found
+   */
+  deleteSection: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/academic/sections/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete section');
+    }
+  },
 };

@@ -632,6 +632,57 @@ const administrationAPI = {
     }
     return response.data.data;
   },
+
+  /**
+   * Delete an event
+   * 
+   * Deletes an event from the system.
+   * Requires admin.delete permission.
+   * 
+   * @param {string} id - Event ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or event not found
+   */
+  deleteEvent: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/administration/events/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete event');
+    }
+  },
+
+  /**
+   * Delete a notice
+   * 
+   * Deletes a notice from the system.
+   * Requires admin.delete permission.
+   * 
+   * @param {string} id - Notice ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or notice not found
+   */
+  deleteNotice: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/administration/notices/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete notice');
+    }
+  },
+
+  /**
+   * Delete a department
+   * 
+   * Deletes a department from the system.
+   * Requires admin.delete permission.
+   * 
+   * @param {string} id - Department ID
+   * @returns {Promise<void>}
+   * @throws {Error} If request fails or department not found
+   */
+  deleteDepartment: async (id: string): Promise<void> => {
+    const response = await apiClient.delete<ApiResponse<null>>(`/administration/departments/${id}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete department');
+    }
+  },
 };
 
 export default administrationAPI;

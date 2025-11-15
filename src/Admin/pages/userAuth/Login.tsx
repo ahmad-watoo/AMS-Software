@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Avatar, Button, Form, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../../contexts/AuthContext";
@@ -12,7 +12,14 @@ interface LoginFormValues {
 const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, error, clearError } = useAuthContext();
+  const { login, error, clearError, isAuthenticated, isLoading } = useAuthContext();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const onFinish = async (values: LoginFormValues) => {
     try {
@@ -23,7 +30,7 @@ const LoginPage: React.FC = () => {
         password: values.password,
       });
       message.success("Login successful!");
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Login failed. Please try again.";
       message.error(errorMessage);

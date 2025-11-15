@@ -45,22 +45,32 @@ const BulkAttendanceEntry: React.FC = () => {
     }
 
     try {
-      // Note: This would need an API endpoint to get enrollments by section
-      // For now, we'll use a placeholder
       setLoading(true);
-      // const enrollments = await getEnrollmentsBySection(sectionId);
-      // setEnrollments(enrollments);
-      // Initialize attendance entries
+      const enrollmentsData = await academicAPI.getEnrollmentsBySection(sectionId);
+      
+      // Map the enrollment data to our Enrollment interface
+      const mappedEnrollments: Enrollment[] = enrollmentsData.map((enrollment: any) => ({
+        id: enrollment.id || enrollment.enrollmentId,
+        studentId: enrollment.studentId,
+        studentName: enrollment.studentName || enrollment.student?.name || enrollment.student?.fullName,
+        rollNumber: enrollment.rollNumber || enrollment.student?.rollNumber,
+      }));
+      
+      setEnrollments(mappedEnrollments);
+      
+      // Initialize attendance entries with default 'present' status
       const entries: Record<string, BulkEntry> = {};
-      // enrollments.forEach((enrollment: Enrollment) => {
-      //   entries[enrollment.id] = {
-      //     enrollmentId: enrollment.id,
-      //     status: 'present',
-      //   };
-      // });
+      mappedEnrollments.forEach((enrollment: Enrollment) => {
+        entries[enrollment.id] = {
+          enrollmentId: enrollment.id,
+          status: 'present',
+        };
+      });
       setAttendanceEntries(entries);
-    } catch (error) {
-      message.error('Failed to load enrollments');
+    } catch (error: any) {
+      message.error(error.message || 'Failed to load enrollments');
+      setEnrollments([]);
+      setAttendanceEntries({});
     } finally {
       setLoading(false);
     }
