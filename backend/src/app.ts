@@ -73,8 +73,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 /**
  * Request Logger
  * Logs all incoming requests for debugging and monitoring
+ * Note: `_res` is unused but kept for Express middleware signature
  */
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   logger.info(`${req.method} ${req.path}`);
   next();
 });
@@ -90,7 +91,7 @@ app.use((req, res, next) => {
  * @route GET /health
  * @returns {Object} Service status and timestamp
  */
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),

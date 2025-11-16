@@ -193,3 +193,4 @@ concurrently "cd backend && npm run dev" "npm start"
 
 **Status**: Once the backend server is running, the signup/login should work! ✅
 
+
