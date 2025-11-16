@@ -6,6 +6,35 @@ import { logger } from '@/config/logger';
 export class UserRepository {
   private tableName = 'users';
 
+  /**
+   * Map raw database row (snake_case) to User domain model (camelCase).
+   * This is important because Supabase returns snake_case column names.
+   */
+  private mapUserFromDB(row: any): User {
+    return {
+      id: row.id,
+      email: row.email,
+      phone: row.phone ?? undefined,
+      passwordHash: row.password_hash ?? undefined,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      cnic: row.cnic ?? undefined,
+      dateOfBirth: row.date_of_birth ?? undefined,
+      gender: row.gender ?? undefined,
+      address: row.address ?? undefined,
+      city: row.city ?? undefined,
+      province: row.province ?? undefined,
+      postalCode: row.postal_code ?? undefined,
+      profilePictureUrl: row.profile_picture_url ?? undefined,
+      isActive: row.is_active,
+      isVerified: row.is_verified,
+      lastLoginAt: row.last_login_at ?? undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      deletedAt: row.deleted_at ?? undefined,
+    };
+  }
+
   async findById(id: string): Promise<User | null> {
     try {
       const { data, error } = await supabaseAdmin
@@ -22,7 +51,7 @@ export class UserRepository {
         throw error;
       }
 
-      return data as User;
+      return this.mapUserFromDB(data);
     } catch (error) {
       logger.error('Error finding user by ID:', error);
       throw error;
@@ -45,7 +74,7 @@ export class UserRepository {
         throw error;
       }
 
-      return data as User;
+      return this.mapUserFromDB(data);
     } catch (error) {
       logger.error('Error finding user by email:', error);
       throw error;
@@ -68,7 +97,7 @@ export class UserRepository {
         throw error;
       }
 
-      return data as User;
+      return this.mapUserFromDB(data);
     } catch (error) {
       logger.error('Error finding user by CNIC:', error);
       throw error;
@@ -112,7 +141,7 @@ export class UserRepository {
         throw error;
       }
 
-      return data as User;
+      return this.mapUserFromDB(data);
     } catch (error) {
       logger.error('Error creating user:', error);
       if (error instanceof ConflictError) {
@@ -214,7 +243,7 @@ export class UserRepository {
         throw error;
       }
 
-      return (data || []) as User[];
+      return (data || []).map((row: any) => this.mapUserFromDB(row));
     } catch (error) {
       logger.error('Error finding all users:', error);
       throw new Error('Failed to fetch users');
