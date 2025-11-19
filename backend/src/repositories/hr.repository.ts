@@ -15,7 +15,7 @@ import { logger } from '@/config/logger';
 
 export class HRRepository {
   private employeesTable = 'staff'; // Using 'staff' table from schema
-  private leaveRequestsTable = 'leaves';
+  private leaveRequestsTable = 'leave_requests';
   private jobPostingsTable = 'job_postings';
   private jobApplicationsTable = 'job_applications';
 

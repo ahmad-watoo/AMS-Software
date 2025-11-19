@@ -17,6 +17,7 @@ import SignUp from "./Admin/pages/userAuth/SignUp"; // Create this component for
 import { AuthProvider } from "./contexts/AuthContext";
 
 import "./App.css";
+import "./styles/layout.css";
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -36,26 +37,30 @@ function App() {
   }, [darkMode]);
   // Layout for protected routes (includes SideMenu and DashboardHeader)
   const ProtectedLayout = () => (
-    <div className="flex w-full">
-      <SideMenu />
-      <div className="w-full">
+    <div className="layout-shell">
+      <aside className="layout-shell__sidebar">
+        <SideMenu />
+      </aside>
+      <main className="layout-shell__main">
         <DashboardHeader darkMode={darkMode} toggleTheme={toggleTheme} />
-        {/* Move Suspense here so only inner content is lazy-loaded */}
-        <Suspense
-          fallback={
-            <Spin
-              size="large"
-              style={{
-                marginTop: "20px",
-                display: "block",
-                textAlign: "center",
-              }}
-            />
-          }
-        >
-          <Outlet />
-        </Suspense>
-      </div>
+        <div className="layout-shell__content">
+          {/* Move Suspense here so only inner content is lazy-loaded */}
+          <Suspense
+            fallback={
+              <Spin
+                size="large"
+                style={{
+                  marginTop: "20px",
+                  display: "block",
+                  textAlign: "center",
+                }}
+              />
+            }
+          >
+            <Outlet />
+          </Suspense>
+        </div>
+      </main>
     </div>
   );
   return (

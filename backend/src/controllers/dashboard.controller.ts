@@ -13,7 +13,7 @@
  */
 
 import { Request, Response } from 'express';
-import { ResponseUtil } from '../utils/response';
+import { sendSuccess, sendError } from '@/utils/response';
 import dashboardService from '../services/dashboard.service';
 import { logger } from '@/config/logger';
 
@@ -47,10 +47,12 @@ class DashboardController {
   async getStats(req: Request, res: Response): Promise<Response> {
     try {
       const stats = await dashboardService.getDashboardStats();
-      return ResponseUtil.success(res, stats, 'Dashboard statistics retrieved successfully');
+      sendSuccess(res, stats, 'Dashboard statistics retrieved successfully');
+      return res;
     } catch (error: any) {
       logger.error('Failed to get dashboard stats', { error: error.message });
-      return ResponseUtil.error(res, error.message, 500);
+      sendError(res, 'DASHBOARD_STATS_ERROR', error.message, 500);
+      return res;
     }
   }
 
@@ -86,10 +88,12 @@ class DashboardController {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const activities = await dashboardService.getRecentActivities(limit);
-      return ResponseUtil.success(res, activities, 'Recent activities retrieved successfully');
+      sendSuccess(res, activities, 'Recent activities retrieved successfully');
+      return res;
     } catch (error: any) {
       logger.error('Failed to get recent activities', { error: error.message });
-      return ResponseUtil.error(res, error.message, 500);
+      sendError(res, 'DASHBOARD_ACTIVITIES_ERROR', error.message, 500);
+      return res;
     }
   }
 
@@ -125,10 +129,12 @@ class DashboardController {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const events = await dashboardService.getUpcomingEvents(limit);
-      return ResponseUtil.success(res, events, 'Upcoming events retrieved successfully');
+      sendSuccess(res, events, 'Upcoming events retrieved successfully');
+      return res;
     } catch (error: any) {
       logger.error('Failed to get upcoming events', { error: error.message });
-      return ResponseUtil.error(res, error.message, 500);
+      sendError(res, 'DASHBOARD_EVENTS_ERROR', error.message, 500);
+      return res;
     }
   }
 }
